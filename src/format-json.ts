@@ -11,7 +11,7 @@ import {
   loadCache,
   saveCache,
   timeDiff,
-} from './utils';
+} from './utils.js';
 
 const ethereumAddressRegex = /^0x[a-fA-F0-9]{40}$/;
 

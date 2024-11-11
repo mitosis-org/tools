@@ -14,7 +14,7 @@ import {
   loadCache,
   saveCache,
   timeDiff,
-} from './utils';
+} from './utils.js';
 
 // Types and constants
 type ImportObject = {
@@ -142,10 +142,12 @@ async function processContract({
 
     const lines = contract.replaceAll(IMPORT_ALL_REGEX, '').split('\n');
     const pragmaIndex = lines.findIndex((l) => l.startsWith('pragma'));
+    
+    lines.splice(pragmaIndex + 1, 0, output);
 
     await writeFile(
       filePath,
-      lines.toSpliced(pragmaIndex + 1, 0, output).join('\n'),
+      lines.join('\n'),
     );
 
     console.log(filePath, `${timeDiff(t)}ms`, '🛠️');
