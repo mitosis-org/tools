@@ -27,7 +27,8 @@
   },
   "type": "module",
   "scripts": {
-    "build": "tsc",
+    "build": "yarn clean && tsc",
+    "clean": "rm -rf dist",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write ."
   },
@@ -35,11 +36,11 @@
     "node": ">=16"
   },
   "files": [
-    "./dist",
+    "./dist/",
     "package.json"
   ],
-  "main": "./dist/index.js",
+  "main": "./dist/src/index.js",
   "bin": {
-    "mito-tools": "./dist/index.js"
+    "mito-tools": "./dist/src/index.js"
   }
 }
