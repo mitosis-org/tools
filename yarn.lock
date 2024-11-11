@@ -496,6 +496,35 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@mitosis/tools@workspace:.":
+  version: 0.0.0-use.local
+  resolution: "@mitosis/tools@workspace:."
+  dependencies:
+    "@eslint/js": "npm:^9.14.0"
+    "@trivago/prettier-plugin-sort-imports": "npm:^4.3.0"
+    "@types/eslint__js": "npm:^8.42.3"
+    "@types/node": "npm:^22.9.0"
+    "@typescript-eslint/eslint-plugin": "npm:^8.14.0"
+    "@typescript-eslint/parser": "npm:^8.14.0"
+    chalk: "npm:^5.3.0"
+    commander: "npm:^12.1.0"
+    eslint: "npm:^9.14.0"
+    eslint-config-prettier: "npm:^9.1.0"
+    eslint-plugin-prettier: "npm:^5.2.1"
+    glob: "npm:^11.0.0"
+    prettier: "npm:^3.3.3"
+    prettier-plugin-solidity: "npm:^1.4.1"
+    prettier-plugin-sort-json: "npm:^4.0.0"
+    toml: "npm:^3.0.0"
+    tsx: "npm:^4.19.2"
+    typescript: "npm:^5.6.3"
+    typescript-eslint: "npm:^8.14.0"
+    viem: "npm:^2.21.44"
+  bin:
+    mito-tools: ./dist/index.js
+  languageName: unknown
+  linkType: soft
+
 "@noble/curves@npm:1.6.0, @noble/curves@npm:^1.4.0, @noble/curves@npm:^1.6.0, @noble/curves@npm:~1.6.0":
   version: 1.6.0
   resolution: "@noble/curves@npm:1.6.0"
@@ -1018,33 +1047,6 @@ __metadata:
   checksum: 10c0/c996b1cfdf95b6c90fee4dae37e332c8b6eb7d106430c17d538034c0ad9a1630cb194d2ab37293b1bdd4d779494beee7786d586a50bd9376fd6f7bcc2bd4c98f
   languageName: node
   linkType: hard
-
-"contract-utils@workspace:.":
-  version: 0.0.0-use.local
-  resolution: "contract-utils@workspace:."
-  dependencies:
-    "@eslint/js": "npm:^9.14.0"
-    "@trivago/prettier-plugin-sort-imports": "npm:^4.3.0"
-    "@types/eslint__js": "npm:^8.42.3"
-    "@types/node": "npm:^22.9.0"
-    "@typescript-eslint/eslint-plugin": "npm:^8.14.0"
-    "@typescript-eslint/parser": "npm:^8.14.0"
-    chalk: "npm:^5.3.0"
-    commander: "npm:^12.1.0"
-    eslint: "npm:^9.14.0"
-    eslint-config-prettier: "npm:^9.1.0"
-    eslint-plugin-prettier: "npm:^5.2.1"
-    glob: "npm:^11.0.0"
-    prettier: "npm:^3.3.3"
-    prettier-plugin-solidity: "npm:^1.4.1"
-    prettier-plugin-sort-json: "npm:^4.0.0"
-    toml: "npm:^3.0.0"
-    tsx: "npm:^4.19.2"
-    typescript: "npm:^5.6.3"
-    typescript-eslint: "npm:^8.14.0"
-    viem: "npm:^2.21.44"
-  languageName: unknown
-  linkType: soft
 
 "cross-spawn@npm:^7.0.0, cross-spawn@npm:^7.0.2":
   version: 7.0.5

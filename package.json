@@ -26,6 +26,11 @@
     "tsx": "^4.19.2",
     "viem": "^2.21.44"
   },
+  "scripts": {
+    "build": "tsc",
+    "lint": "eslint . --ext .ts",
+    "format": "prettier --write ."
+  },
   "files": [
     "./dist",
     "package.json"
