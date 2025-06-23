@@ -7,16 +7,17 @@
     "@types/eslint__js": "^8.42.3",
     "@typescript-eslint/eslint-plugin": "8.34.1",
     "@typescript-eslint/parser": "8.34.1",
+    "esbuild": "^0.25.5",
     "eslint": "9.29.0",
     "eslint-config-prettier": "10.1.5",
     "eslint-plugin-prettier": "5.5.0",
     "prettier": "3.6.0",
     "prettier-plugin-solidity": "2.0.0",
     "prettier-plugin-sort-json": "4.1.1",
-    "typescript-eslint": "8.34.1"
+    "typescript-eslint": "8.34.1",
+    "@types/node": "24.0.3"
   },
   "dependencies": {
-    "@types/node": "24.0.3",
     "chalk": "5.4.1",
     "commander": "14.0.0",
     "glob": "11.0.3",
@@ -25,23 +26,22 @@
     "typescript": "5.8.3",
     "viem": "2.31.4"
   },
-  "type": "module",
+  "type": "commonjs",
   "scripts": {
-    "build": "yarn clean && tsc",
+    "build": "yarn clean && esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node --target=node16",
     "clean": "rm -rf dist",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "prepare": "yarn build",
-    "postinstall": "yarn build"
+    "test": "bash test/test.sh"
   },
   "engines": {
     "node": ">=16"
   },
   "files": [
-    "src/",
+    "dist/index.js",
     "package.json"
   ],
   "bin": {
-    "mito-tools": "./dist/src/index.js"
+    "mito-tools": "./dist/index.js"
   }
 }

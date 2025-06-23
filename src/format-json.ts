@@ -1,5 +1,4 @@
 import chalk from 'chalk';
-import { Command } from 'commander';
 import { promises as fs } from 'fs';
 import { glob } from 'glob';
 import * as path from 'path';
@@ -141,34 +140,4 @@ export async function executeFormatJson(
   await saveCache('format-json', Object.fromEntries(result));
 
   console.log(`✨ Job Done. Total time: ${timeDiff(t)}ms`);
-}
-
-// Command setup for standalone execution
-if (import.meta.url === `file://${process.argv[1]}`) {
-  new Command()
-    .name('format-json')
-    .description(
-      `Format JSON files
-- Sort JSON
-- Ethereum address to checksummed address`,
-    )
-    .requiredOption('-i --input <pattern>', 'Glob pattern for files to process')
-    .option(
-      '-c --check',
-      'Check for non-checksum addresses without modifying files',
-      false,
-    )
-    .action(async (options) => {
-      try {
-        await executeFormatJson(options.input, options.check);
-      } catch (err) {
-        console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
-        process.exit(1);
-      }
-    })
-    .parseAsync(process.argv)
-    .catch((err) => {
-      console.error('[ERROR] Command parsing error:', err);
-      process.exit(1);
-    });
 }

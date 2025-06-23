@@ -12,8 +12,5 @@
 #!.yarn/cache
 .pnp.*
 
-# Build output
-dist/
-
 # Cache
 cache/

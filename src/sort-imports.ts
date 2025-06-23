@@ -1,7 +1,6 @@
 import chalk from 'chalk';
 import { exec } from 'child_process';
-import { Command } from 'commander';
-import { promises as fs } from 'fs';
+import { existsSync, promises as fs } from 'fs';
 import { readFile, writeFile } from 'fs/promises';
 import { glob } from 'glob';
 import path from 'path';
@@ -174,14 +173,17 @@ export async function executeSortImports(options: {
   }
 
   try {
-    const foundryConfig = await readFile('foundry.toml', 'utf-8');
-    const {
-      profile: {
-        default: { remappings: remappingsList },
-      },
-    } = toml.parse(foundryConfig) as {
-      profile: { default: { remappings: string[] } };
-    };
+    let remappingsList: string[] = [];
+    if (existsSync('foundry.toml')) {
+      const foundryConfig = await readFile('foundry.toml', 'utf-8');
+      ({
+        profile: {
+          default: { remappings: remappingsList },
+        },
+      } = toml.parse(foundryConfig) as {
+        profile: { default: { remappings: string[] } };
+      });
+    }
 
     const remappings = remappingsList.map((l) => l.split('=')[0]);
 
@@ -217,38 +219,4 @@ export async function executeSortImports(options: {
     );
     console.log(`✨ Job Done. Total time: ${timeDiff(t)}ms`);
   }
-}
-
-// Command setup for standalone execution
-if (import.meta.url === `file://${process.argv[1]}`) {
-  new Command()
-    .name('sort-imports')
-    .description('CLI tool to sort import statements in Solidity files')
-    .requiredOption(
-      '-i, --input <pattern>',
-      'Glob pattern for files to process',
-    )
-    .option(
-      '-c, --check',
-      'check for import statement sorting issues without modifying',
-      false,
-    )
-    .option(
-      '-d --debug',
-      'enable debug mode to print debug information like raw imports',
-      false,
-    )
-    .action(async (options) => {
-      try {
-        await executeSortImports(options);
-      } catch (err) {
-        console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
-        process.exit(1);
-      }
-    })
-    .parseAsync(process.argv)
-    .catch((err) => {
-      console.error('[ERROR] Command parsing error:', err);
-      process.exit(1);
-    });
 }

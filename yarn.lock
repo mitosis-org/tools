@@ -496,6 +496,7 @@ __metadata:
     "@typescript-eslint/parser": "npm:8.34.1"
     chalk: "npm:5.4.1"
     commander: "npm:14.0.0"
+    esbuild: "npm:^0.25.5"
     eslint: "npm:9.29.0"
     eslint-config-prettier: "npm:10.1.5"
     eslint-plugin-prettier: "npm:5.5.0"
@@ -509,7 +510,7 @@ __metadata:
     typescript-eslint: "npm:8.34.1"
     viem: "npm:2.31.4"
   bin:
-    mito-tools: ./dist/src/index.js
+    mito-tools: ./dist/index.js
   languageName: unknown
   linkType: soft
 
@@ -1175,7 +1176,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"esbuild@npm:~0.25.0":
+"esbuild@npm:^0.25.5, esbuild@npm:~0.25.0":
   version: 0.25.5
   resolution: "esbuild@npm:0.25.5"
   dependencies:
