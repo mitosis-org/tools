@@ -17,7 +17,7 @@ export default tseslint.config(
       '.yarn/',
       '.pnp.*',
       'eslint.config.mjs',
-      '.prettierrc.mjs',
+      '.prettierrc.cjs',
     ],
   },
   {

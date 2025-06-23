@@ -1,5 +1,28 @@
 {
-  "name": "@mitosis/tools",
+  "name": "@mitosis-org/tools",
+  "version": "1.0.0",
+  "description": "A collection of development tools for blockchain and Ethereum projects",
+  "keywords": [
+    "blockchain",
+    "ethereum",
+    "solidity",
+    "json",
+    "cli",
+    "development",
+    "tools"
+  ],
+  "homepage": "https://github.com/mitosis-org/tools#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mitosis-org/tools.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mitosis-org/tools/issues"
+  },
+  "license": "MIT",
+  "author": [
+    "hong@byeongsu.dev"
+  ],
   "packageManager": "yarn@4.9.2",
   "devDependencies": {
     "@eslint/js": "9.29.0",
@@ -39,7 +62,9 @@
   },
   "files": [
     "dist/index.js",
-    "package.json"
+    "package.json",
+    "README.md",
+    "LICENSE"
   ],
   "bin": {
     "mito-tools": "./dist/index.js"

@@ -1,4 +1,5 @@
-module.exports = {
+/** @type {import("prettier").Config} */
+const config = {
   importOrder: ['^[./]'],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
@@ -14,3 +15,5 @@ module.exports = {
   trailingComma: 'all',
   useTabs: false,
 };
+
+module.exports = config;

@@ -19,7 +19,11 @@ function convertToChecksum(address: string): string {
   return getAddress(address);
 }
 
-function processJsonValue(filePath: string, check: boolean, value: any): any {
+function processJsonValue(
+  filePath: string,
+  check: boolean,
+  value: unknown,
+): unknown {
   if (typeof value === 'string' && ethereumAddressRegex.test(value)) {
     const checksummed = convertToChecksum(value);
     const hasChanged = checksummed !== value;
@@ -37,28 +41,28 @@ function processJsonValue(filePath: string, check: boolean, value: any): any {
 function processJsonObject(
   filePath: string,
   check: boolean,
-  data: Record<string, any>,
-): Record<string, any> {
+  data: Record<string, unknown>,
+): Record<string, unknown> {
   return Object.fromEntries(
     Object.entries(data)
       .map(([k, v]) => [k, processJson(filePath, check, v)])
-      .sort(([a], [b]) => a.localeCompare(b)),
+      .sort(([a], [b]) => (a as string).localeCompare(b as string)),
   );
 }
 
 function processJsonArray(
   filePath: string,
   check: boolean,
-  data: any[],
-): any[] {
+  data: unknown[],
+): unknown[] {
   return data.map((i) => processJson(filePath, check, i));
 }
 
-function processJson(filePath: string, check: boolean, data: any): any {
+function processJson(filePath: string, check: boolean, data: unknown): unknown {
   if (typeof data === 'object' && data !== null) {
     return Array.isArray(data)
       ? processJsonArray(filePath, check, data)
-      : processJsonObject(filePath, check, data);
+      : processJsonObject(filePath, check, data as Record<string, unknown>);
   }
   return processJsonValue(filePath, check, data);
 }

@@ -5,17 +5,7 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "incremental": false,
-    "lib": [
-      "ES2015",
-      "ES2016",
-      "ES2017",
-      "ES2018",
-      "ES2019",
-      "ES2020",
-      "ES2021",
-      "ES2022",
-      "DOM"
-    ],
+    "lib": ["ES2022"],
     "module": "nodenext",
     "moduleResolution": "nodenext",
     "noEmitOnError": true,
@@ -34,5 +24,5 @@
     "outDir": "./dist/",
     "rootDir": "."
   },
-  "include": ["src/**/*.ts", "eslint.config.mjs"]
+  "include": ["src/**/*.ts", "eslint.config.mjs", ".prettierrc.cjs"]
 }
