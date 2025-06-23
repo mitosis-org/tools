@@ -489,7 +489,7 @@ __metadata:
   resolution: "@mitosis/tools@workspace:."
   dependencies:
     "@eslint/js": "npm:9.29.0"
-    "@trivago/prettier-plugin-sort-imports": "npm:5.2.2"
+    "@trivago/prettier-plugin-sort-imports": "npm:^5.2.2"
     "@types/eslint__js": "npm:^8.42.3"
     "@types/node": "npm:24.0.3"
     "@typescript-eslint/eslint-plugin": "npm:8.34.1"
@@ -643,7 +643,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@trivago/prettier-plugin-sort-imports@npm:5.2.2":
+"@trivago/prettier-plugin-sort-imports@npm:^5.2.2":
   version: 5.2.2
   resolution: "@trivago/prettier-plugin-sort-imports@npm:5.2.2"
   dependencies:

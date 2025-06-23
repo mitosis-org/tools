@@ -1,8 +1,12 @@
-const prettierConfig = {
+module.exports = {
   importOrder: ['^[./]'],
   importOrderSeparation: true,
   importOrderSortSpecifiers: true,
-  plugins: [import.meta.resolve('@trivago/prettier-plugin-sort-imports')],
+  plugins: [
+    require.resolve('@trivago/prettier-plugin-sort-imports'),
+    require.resolve('prettier-plugin-solidity'),
+    require.resolve('prettier-plugin-sort-json'),
+  ],
   printWidth: 80,
   semi: true,
   singleQuote: true,
@@ -10,5 +14,3 @@ const prettierConfig = {
   trailingComma: 'all',
   useTabs: false,
 };
-
-export default prettierConfig;
