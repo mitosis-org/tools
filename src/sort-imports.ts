@@ -52,14 +52,14 @@ function sortImports(
   });
 
   const srcGroups = src
-    .reduce<string[][]>(
+    .reduce(
       (acc, i) => {
         acc[acc.length - 1].push(trimLineBreak(i.full));
         if (i.full.endsWith('\n')) acc.push([]);
 
         return acc;
       },
-      [[]],
+      [[]] as string[][],
     )
     .filter((g) => g.length > 0);
 
@@ -142,13 +142,10 @@ async function processContract({
 
     const lines = contract.replaceAll(IMPORT_ALL_REGEX, '').split('\n');
     const pragmaIndex = lines.findIndex((l) => l.startsWith('pragma'));
-    
-    lines.splice(pragmaIndex + 1, 0, output);
 
-    await writeFile(
-      filePath,
-      lines.join('\n'),
-    );
+    const newLines = [...lines];
+    newLines.splice(pragmaIndex + 1, 0, output);
+    await writeFile(filePath, newLines.join('\n'));
 
     console.log(filePath, `${timeDiff(t)}ms`, '🛠️');
   } catch (err) {
@@ -161,8 +158,8 @@ async function processContract({
   }
 }
 
-// Main execution logic
-async function executeCommand(options: {
+// Main execution logic - exported for use by main CLI
+export async function executeSortImports(options: {
   input: string;
   check: boolean;
   debug: boolean;
@@ -222,26 +219,36 @@ async function executeCommand(options: {
   }
 }
 
-// Command setup
-export default new Command()
-  .name('sort-imports')
-  .description('CLI tool to sort import statements in Solidity files')
-  .requiredOption('-i, --input <pattern>', 'Glob pattern for files to process')
-  .option(
-    '-c, --check',
-    'check for import statement sorting issues without modifying',
-    false,
-  )
-  .option(
-    '-d --debug',
-    'enable debug mode to print debug information like raw imports',
-    false,
-  )
-  .action(async (options) => {
-    try {
-      await executeCommand(options);
-    } catch (err) {
-      console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
+// Command setup for standalone execution
+if (import.meta.url === `file://${process.argv[1]}`) {
+  new Command()
+    .name('sort-imports')
+    .description('CLI tool to sort import statements in Solidity files')
+    .requiredOption(
+      '-i, --input <pattern>',
+      'Glob pattern for files to process',
+    )
+    .option(
+      '-c, --check',
+      'check for import statement sorting issues without modifying',
+      false,
+    )
+    .option(
+      '-d --debug',
+      'enable debug mode to print debug information like raw imports',
+      false,
+    )
+    .action(async (options) => {
+      try {
+        await executeSortImports(options);
+      } catch (err) {
+        console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
+        process.exit(1);
+      }
+    })
+    .parseAsync(process.argv)
+    .catch((err) => {
+      console.error('[ERROR] Command parsing error:', err);
       process.exit(1);
-    }
-  });
+    });
+}

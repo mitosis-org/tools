@@ -12,7 +12,13 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['dist/', '.yarn/', '.pnp.*', 'eslint.config.mjs', '.prettierrc.mjs'],
+    ignores: [
+      'dist/',
+      '.yarn/',
+      '.pnp.*',
+      'eslint.config.mjs',
+      '.prettierrc.mjs',
+    ],
   },
   {
     files: ['src/**/*.ts'],

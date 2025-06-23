@@ -1,36 +1,37 @@
 {
   "name": "@mitosis/tools",
-  "packageManager": "yarn@4.5.1",
+  "packageManager": "yarn@4.9.2",
   "devDependencies": {
-    "@eslint/js": "^9.14.0",
-    "@trivago/prettier-plugin-sort-imports": "^4.3.0",
+    "@eslint/js": "9.29.0",
+    "@trivago/prettier-plugin-sort-imports": "5.2.2",
     "@types/eslint__js": "^8.42.3",
-    "@types/node": "^22.9.0",
-    "@typescript-eslint/eslint-plugin": "^8.14.0",
-    "@typescript-eslint/parser": "^8.14.0",
-    "eslint": "^9.14.0",
-    "eslint-config-prettier": "^9.1.0",
-    "eslint-plugin-prettier": "^5.2.1",
-    "prettier": "^3.3.3",
-    "prettier-plugin-solidity": "^1.4.1",
-    "prettier-plugin-sort-json": "^4.0.0",
-    "typescript": "^5.6.3",
-    "typescript-eslint": "^8.14.0"
+    "@typescript-eslint/eslint-plugin": "8.34.1",
+    "@typescript-eslint/parser": "8.34.1",
+    "eslint": "9.29.0",
+    "eslint-config-prettier": "10.1.5",
+    "eslint-plugin-prettier": "5.5.0",
+    "prettier": "3.6.0",
+    "prettier-plugin-solidity": "2.0.0",
+    "prettier-plugin-sort-json": "4.1.1",
+    "typescript-eslint": "8.34.1"
   },
   "dependencies": {
-    "chalk": "^5.3.0",
-    "commander": "^12.1.0",
-    "glob": "^11.0.0",
-    "toml": "^3.0.0",
-    "tsx": "^4.19.2",
-    "viem": "^2.21.44"
+    "@types/node": "24.0.3",
+    "chalk": "5.4.1",
+    "commander": "14.0.0",
+    "glob": "11.0.3",
+    "toml": "3.0.0",
+    "tsx": "4.20.3",
+    "typescript": "5.8.3",
+    "viem": "2.31.4"
   },
   "type": "module",
   "scripts": {
     "build": "yarn clean && tsc",
     "clean": "rm -rf dist",
     "lint": "eslint . --ext .ts",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "prepare": "yarn build"
   },
   "engines": {
     "node": ">=16"
@@ -39,7 +40,6 @@
     "./dist/",
     "package.json"
   ],
-  "main": "./dist/src/index.js",
   "bin": {
     "mito-tools": "./dist/src/index.js"
   }

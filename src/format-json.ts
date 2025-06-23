@@ -59,7 +59,7 @@ function processJson(filePath: string, check: boolean, data: any): any {
   if (typeof data === 'object' && data !== null) {
     return Array.isArray(data)
       ? processJsonArray(filePath, check, data)
-      : processJsonObject(filePath, check, data as Record<string, any>);
+      : processJsonObject(filePath, check, data);
   }
   return processJsonValue(filePath, check, data);
 }
@@ -99,8 +99,8 @@ async function processFile(
   return [filePath, checksum];
 }
 
-// Main execution logic
-async function executeCommand(
+// Main execution logic - exported for use by main CLI
+export async function executeFormatJson(
   globPattern: string,
   checkOnly: boolean,
 ): Promise<void> {
@@ -143,25 +143,32 @@ async function executeCommand(
   console.log(`✨ Job Done. Total time: ${timeDiff(t)}ms`);
 }
 
-// Command setup
-export default new Command()
-  .name('format-json')
-  .description(
-    `Format JSON files
+// Command setup for standalone execution
+if (import.meta.url === `file://${process.argv[1]}`) {
+  new Command()
+    .name('format-json')
+    .description(
+      `Format JSON files
 - Sort JSON
 - Ethereum address to checksummed address`,
-  )
-  .requiredOption('-i --input <pattern>', 'Glob pattern for files to process')
-  .option(
-    '-c --check',
-    'Check for non-checksum addresses without modifying files',
-    false,
-  )
-  .action(async (options) => {
-    try {
-      await executeCommand(options.input, options.check);
-    } catch (err) {
-      console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
+    )
+    .requiredOption('-i --input <pattern>', 'Glob pattern for files to process')
+    .option(
+      '-c --check',
+      'Check for non-checksum addresses without modifying files',
+      false,
+    )
+    .action(async (options) => {
+      try {
+        await executeFormatJson(options.input, options.check);
+      } catch (err) {
+        console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
+        process.exit(1);
+      }
+    })
+    .parseAsync(process.argv)
+    .catch((err) => {
+      console.error('[ERROR] Command parsing error:', err);
       process.exit(1);
-    }
-  });
+    });
+}
