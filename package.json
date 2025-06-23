@@ -31,7 +31,8 @@
     "clean": "rm -rf dist",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
-    "prepare": "yarn build"
+    "prepare": "yarn build",
+    "postinstall": "yarn build"
   },
   "engines": {
     "node": ">=16"
