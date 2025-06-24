@@ -1,5 +1,6 @@
 lib
 types
+dist
 node_modules
 dependencies
 out

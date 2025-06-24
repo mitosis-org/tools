@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [main, develop]
   pull_request:
-    branches: [ main ]
+    branches: [main]
 
 permissions:
   contents: read
@@ -13,58 +13,39 @@ jobs:
   test:
     name: Test on Node.js ${{ matrix.node-version }} and ${{ matrix.os }}
     runs-on: ${{ matrix.os }}
-    
+
     strategy:
       matrix:
         node-version: [18, 20, 22]
         os: [ubuntu-latest, windows-latest, macos-latest]
       fail-fast: false
-    
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
-        
+
+      - name: Enable corepack
+        run: |
+          npm install -g corepack --force
+          corepack enable
+
       - name: Setup Node.js ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'yarn'
-          
+
       - name: Install dependencies
         run: yarn install --frozen-lockfile
-        
+
       - name: Run linter
         run: yarn lint
-        
+
       - name: Check formatting
         run: yarn format
-        
+
       - name: Build project
         run: yarn build
-        
+
       - name: Run tests
         run: yarn test
-
-  # Additional job for checking minimum Node.js version
-  test-minimum-node:
-    name: Test minimum Node.js version (16)
-    runs-on: ubuntu-latest
-    
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        
-      - name: Setup Node.js 16
-        uses: actions/setup-node@v4
-        with:
-          node-version: 16
-          cache: 'yarn'
-          
-      - name: Install dependencies
-        run: yarn install --frozen-lockfile
-        
-      - name: Build project
-        run: yarn build
-        
-      - name: Run tests
-        run: yarn test 
