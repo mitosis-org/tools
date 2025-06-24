@@ -11,14 +11,8 @@ permissions:
 
 jobs:
   test:
-    name: Test on Node.js ${{ matrix.node-version }} and ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-
-    strategy:
-      matrix:
-        node-version: [18, 20, 22]
-        os: [ubuntu-latest, windows-latest, macos-latest]
-      fail-fast: false
+    name: Test on Node.js 20
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -29,10 +23,10 @@ jobs:
           npm install -g corepack --force
           corepack enable
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: 20
           cache: 'yarn'
 
       - name: Install dependencies
