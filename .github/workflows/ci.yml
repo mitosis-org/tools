@@ -43,7 +43,7 @@ jobs:
         run: yarn format
 
       - name: Security audit
-        run: yarn audit --groups dependencies
+        run: yarn npm audit
         continue-on-error: true
 
       - name: Build project
