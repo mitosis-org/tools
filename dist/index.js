@@ -1247,14 +1247,8 @@ var require_command = __commonJS({
           outputError: (str, write) => write(str),
           getOutHelpWidth: () => process3.stdout.isTTY ? process3.stdout.columns : void 0,
           getErrHelpWidth: () => process3.stderr.isTTY ? process3.stderr.columns : void 0,
-          getOutHasColors: () => {
-            var _a2, _b;
-            return useColor() ?? (process3.stdout.isTTY && ((_b = (_a2 = process3.stdout).hasColors) == null ? void 0 : _b.call(_a2)));
-          },
-          getErrHasColors: () => {
-            var _a2, _b;
-            return useColor() ?? (process3.stderr.isTTY && ((_b = (_a2 = process3.stderr).hasColors) == null ? void 0 : _b.call(_a2)));
-          },
+          getOutHasColors: () => useColor() ?? (process3.stdout.isTTY && process3.stdout.hasColors?.()),
+          getErrHasColors: () => useColor() ?? (process3.stderr.isTTY && process3.stderr.hasColors?.()),
           stripColor: (str) => stripColor(str)
         };
         this._hidden = false;
@@ -2044,13 +2038,12 @@ Expecting one of '${allowedValues.join("', '")}'`);
        * @private
        */
       _prepareUserArgs(argv, parseOptions) {
-        var _a2;
         if (argv !== void 0 && !Array.isArray(argv)) {
           throw new Error("first parameter to parse must be array or undefined");
         }
         parseOptions = parseOptions || {};
         if (argv === void 0 && parseOptions.from === void 0) {
-          if ((_a2 = process3.versions) == null ? void 0 : _a2.electron) {
+          if (process3.versions?.electron) {
             parseOptions.from = "electron";
           }
           const execArgv = process3.execArgv ?? [];
@@ -2353,7 +2346,6 @@ Expecting one of '${allowedValues.join("', '")}'`);
        * @private
        */
       _dispatchHelpCommand(subcommandName) {
-        var _a2, _b;
         if (!subcommandName) {
           this.help();
         }
@@ -2364,7 +2356,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
         return this._dispatchSubcommand(
           subcommandName,
           [],
-          [((_a2 = this._getHelpOption()) == null ? void 0 : _a2.long) ?? ((_b = this._getHelpOption()) == null ? void 0 : _b.short) ?? "--help"]
+          [this._getHelpOption()?.long ?? this._getHelpOption()?.short ?? "--help"]
         );
       }
       /**
@@ -3034,7 +3026,6 @@ Expecting one of '${allowedValues.join("', '")}'`);
        * @return {(string|Command)}
        */
       alias(alias) {
-        var _a2;
         if (alias === void 0) return this._aliases[0];
         let command = this;
         if (this.commands.length !== 0 && this.commands[this.commands.length - 1]._executableHandler) {
@@ -3042,7 +3033,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
         }
         if (alias === command._name)
           throw new Error("Command alias can't be the same as its name");
-        const matchingCommand = (_a2 = this.parent) == null ? void 0 : _a2._findCommand(alias);
+        const matchingCommand = this.parent?._findCommand(alias);
         if (matchingCommand) {
           const existingCmd = [matchingCommand.name()].concat(matchingCommand.aliases()).join("|");
           throw new Error(
@@ -3250,7 +3241,6 @@ Expecting one of '${allowedValues.join("', '")}'`);
        * @param {{ error: boolean } | Function} [contextOptions] - pass {error:true} to write to stderr instead of stdout
        */
       outputHelp(contextOptions) {
-        var _a2;
         let deprecatedCallback;
         if (typeof contextOptions === "function") {
           deprecatedCallback = contextOptions;
@@ -3272,7 +3262,7 @@ Expecting one of '${allowedValues.join("', '")}'`);
           }
         }
         outputContext.write(helpInformation);
-        if ((_a2 = this._getHelpOption()) == null ? void 0 : _a2.long) {
+        if (this._getHelpOption()?.long) {
           this.emit(this._getHelpOption().long);
         }
         this.emit("afterHelp", eventContext);
@@ -4444,20 +4434,18 @@ var init_ast = __esm({
         }
       }
       toJSON() {
-        var _a2;
         const ret = this.type === null ? this.#parts.slice().map((p) => typeof p === "string" ? p : p.toJSON()) : [this.type, ...this.#parts.map((p) => p.toJSON())];
         if (this.isStart() && !this.type)
           ret.unshift([]);
-        if (this.isEnd() && (this === this.#root || this.#root.#filledNegs && ((_a2 = this.#parent) == null ? void 0 : _a2.type) === "!")) {
+        if (this.isEnd() && (this === this.#root || this.#root.#filledNegs && this.#parent?.type === "!")) {
           ret.push({});
         }
         return ret;
       }
       isStart() {
-        var _a2;
         if (this.#root === this)
           return true;
-        if (!((_a2 = this.#parent) == null ? void 0 : _a2.isStart()))
+        if (!this.#parent?.isStart())
           return false;
         if (this.#parentIndex === 0)
           return true;
@@ -4471,15 +4459,14 @@ var init_ast = __esm({
         return true;
       }
       isEnd() {
-        var _a2, _b, _c;
         if (this.#root === this)
           return true;
-        if (((_a2 = this.#parent) == null ? void 0 : _a2.type) === "!")
+        if (this.#parent?.type === "!")
           return true;
-        if (!((_b = this.#parent) == null ? void 0 : _b.isEnd()))
+        if (!this.#parent?.isEnd())
           return false;
         if (!this.type)
-          return (_c = this.#parent) == null ? void 0 : _c.isEnd();
+          return this.#parent?.isEnd();
         const pl = this.#parent ? this.#parent.#parts.length : 0;
         return this.#parentIndex === pl - 1;
       }
@@ -4695,7 +4682,6 @@ var init_ast = __esm({
       // is ^(?!\.), we can just prepend (?!\.) to the pattern (either root
       // or start or whatever) and prepend ^ or / at the Regexp construction.
       toRegExpSource(allowDot) {
-        var _a2;
         const dot = allowDot ?? !!this.#options.dot;
         if (this.#root === this)
           this.#fillNegs();
@@ -4725,7 +4711,7 @@ var init_ast = __esm({
             }
           }
           let end = "";
-          if (this.isEnd() && this.#root.#filledNegs && ((_a2 = this.#parent) == null ? void 0 : _a2.type) === "!") {
+          if (this.isEnd() && this.#root.#filledNegs && this.#parent?.type === "!") {
             end = "(?:$|\\/)";
           }
           const final2 = start2 + src + end;
@@ -5572,7 +5558,7 @@ var init_esm3 = __esm({
 });
 
 // ../../../.yarn/berry/cache/lru-cache-npm-11.0.2-72e1eedbe6-10c0.zip/node_modules/lru-cache/dist/esm/index.js
-var perf, warned, PROCESS, emitWarning, AC, AS, _a, shouldWarn, TYPE, isPosInt, getUintArray, ZeroArray, Stack, LRUCache;
+var perf, warned, PROCESS, emitWarning, AC, AS, shouldWarn, TYPE, isPosInt, getUintArray, ZeroArray, Stack, LRUCache;
 var init_esm4 = __esm({
   "../../../.yarn/berry/cache/lru-cache-npm-11.0.2-72e1eedbe6-10c0.zip/node_modules/lru-cache/dist/esm/index.js"() {
     perf = typeof performance === "object" && performance && typeof performance.now === "function" ? performance : Date;
@@ -5599,7 +5585,6 @@ var init_esm4 = __esm({
         }
         signal = new AS();
         abort(reason) {
-          var _a2, _b;
           if (this.signal.aborted)
             return;
           this.signal.reason = reason;
@@ -5607,10 +5592,10 @@ var init_esm4 = __esm({
           for (const fn of this.signal._onabort) {
             fn(reason);
           }
-          (_b = (_a2 = this.signal).onabort) == null ? void 0 : _b.call(_a2, reason);
+          this.signal.onabort?.(reason);
         }
       };
-      let printACPolyfillWarning = ((_a = PROCESS.env) == null ? void 0 : _a.LRU_CACHE_IGNORE_AC_WARNING) !== "1";
+      let printACPolyfillWarning = PROCESS.env?.LRU_CACHE_IGNORE_AC_WARNING !== "1";
       const warnACPolyfill = () => {
         if (!printACPolyfillWarning)
           return;
@@ -6359,7 +6344,6 @@ var init_esm4 = __esm({
        * `cache.delete(key)`. `undefined` is never stored in the cache.
        */
       set(k, v, setOptions = {}) {
-        var _a2, _b, _c, _d, _e;
         if (v === void 0) {
           this.delete(k);
           return this;
@@ -6398,18 +6382,18 @@ var init_esm4 = __esm({
               const { __staleWhileFetching: s } = oldVal;
               if (s !== void 0 && !noDisposeOnSet) {
                 if (this.#hasDispose) {
-                  (_a2 = this.#dispose) == null ? void 0 : _a2.call(this, s, k, "set");
+                  this.#dispose?.(s, k, "set");
                 }
                 if (this.#hasDisposeAfter) {
-                  (_b = this.#disposed) == null ? void 0 : _b.push([s, k, "set"]);
+                  this.#disposed?.push([s, k, "set"]);
                 }
               }
             } else if (!noDisposeOnSet) {
               if (this.#hasDispose) {
-                (_c = this.#dispose) == null ? void 0 : _c.call(this, oldVal, k, "set");
+                this.#dispose?.(oldVal, k, "set");
               }
               if (this.#hasDisposeAfter) {
-                (_d = this.#disposed) == null ? void 0 : _d.push([oldVal, k, "set"]);
+                this.#disposed?.push([oldVal, k, "set"]);
               }
             }
             this.#removeItemSize(index);
@@ -6438,8 +6422,8 @@ var init_esm4 = __esm({
         if (!noDisposeOnSet && this.#hasDisposeAfter && this.#disposed) {
           const dt = this.#disposed;
           let task;
-          while (task = dt == null ? void 0 : dt.shift()) {
-            (_e = this.#disposeAfter) == null ? void 0 : _e.call(this, ...task);
+          while (task = dt?.shift()) {
+            this.#disposeAfter?.(...task);
           }
         }
         return this;
@@ -6449,7 +6433,6 @@ var init_esm4 = __esm({
        * `undefined` if cache is empty.
        */
       pop() {
-        var _a2;
         try {
           while (this.#size) {
             const val = this.#valList[this.#head];
@@ -6466,14 +6449,13 @@ var init_esm4 = __esm({
           if (this.#hasDisposeAfter && this.#disposed) {
             const dt = this.#disposed;
             let task;
-            while (task = dt == null ? void 0 : dt.shift()) {
-              (_a2 = this.#disposeAfter) == null ? void 0 : _a2.call(this, ...task);
+            while (task = dt?.shift()) {
+              this.#disposeAfter?.(...task);
             }
           }
         }
       }
       #evict(free) {
-        var _a2, _b;
         const head = this.#head;
         const k = this.#keyList[head];
         const v = this.#valList[head];
@@ -6481,10 +6463,10 @@ var init_esm4 = __esm({
           v.__abortController.abort(new Error("evicted"));
         } else if (this.#hasDispose || this.#hasDisposeAfter) {
           if (this.#hasDispose) {
-            (_a2 = this.#dispose) == null ? void 0 : _a2.call(this, v, k, "evict");
+            this.#dispose?.(v, k, "evict");
           }
           if (this.#hasDisposeAfter) {
-            (_b = this.#disposed) == null ? void 0 : _b.push([v, k, "evict"]);
+            this.#disposed?.push([v, k, "evict"]);
           }
         }
         this.#removeItemSize(head);
@@ -6568,7 +6550,7 @@ var init_esm4 = __esm({
         }
         const ac = new AC();
         const { signal } = options;
-        signal == null ? void 0 : signal.addEventListener("abort", () => ac.abort(signal.reason), {
+        signal?.addEventListener("abort", () => ac.abort(signal.reason), {
           signal: ac.signal
         });
         const fetchOpts = {
@@ -6639,8 +6621,7 @@ var init_esm4 = __esm({
           }
         };
         const pcall = (res, rej) => {
-          var _a2;
-          const fmp = (_a2 = this.#fetchMethod) == null ? void 0 : _a2.call(this, k, v, fetchOpts);
+          const fmp = this.#fetchMethod?.(k, v, fetchOpts);
           if (fmp && fmp instanceof Promise) {
             fmp.then((v2) => res(v2 === void 0 ? void 0 : v2), rej);
           }
@@ -6855,7 +6836,6 @@ var init_esm4 = __esm({
         return this.#delete(k, "delete");
       }
       #delete(k, reason) {
-        var _a2, _b, _c, _d;
         let deleted = false;
         if (this.#size !== 0) {
           const index = this.#keyMap.get(k);
@@ -6870,10 +6850,10 @@ var init_esm4 = __esm({
                 v.__abortController.abort(new Error("deleted"));
               } else if (this.#hasDispose || this.#hasDisposeAfter) {
                 if (this.#hasDispose) {
-                  (_a2 = this.#dispose) == null ? void 0 : _a2.call(this, v, k, reason);
+                  this.#dispose?.(v, k, reason);
                 }
                 if (this.#hasDisposeAfter) {
-                  (_b = this.#disposed) == null ? void 0 : _b.push([v, k, reason]);
+                  this.#disposed?.push([v, k, reason]);
                 }
               }
               this.#keyMap.delete(k);
@@ -6894,11 +6874,11 @@ var init_esm4 = __esm({
             }
           }
         }
-        if (this.#hasDisposeAfter && ((_c = this.#disposed) == null ? void 0 : _c.length)) {
+        if (this.#hasDisposeAfter && this.#disposed?.length) {
           const dt = this.#disposed;
           let task;
-          while (task = dt == null ? void 0 : dt.shift()) {
-            (_d = this.#disposeAfter) == null ? void 0 : _d.call(this, ...task);
+          while (task = dt?.shift()) {
+            this.#disposeAfter?.(...task);
           }
         }
         return deleted;
@@ -6910,7 +6890,6 @@ var init_esm4 = __esm({
         return this.#clear("delete");
       }
       #clear(reason) {
-        var _a2, _b, _c;
         for (const index of this.#rindexes({ allowStale: true })) {
           const v = this.#valList[index];
           if (this.#isBackgroundFetch(v)) {
@@ -6918,10 +6897,10 @@ var init_esm4 = __esm({
           } else {
             const k = this.#keyList[index];
             if (this.#hasDispose) {
-              (_a2 = this.#dispose) == null ? void 0 : _a2.call(this, v, k, reason);
+              this.#dispose?.(v, k, reason);
             }
             if (this.#hasDisposeAfter) {
-              (_b = this.#disposed) == null ? void 0 : _b.push([v, k, reason]);
+              this.#disposed?.push([v, k, reason]);
             }
           }
         }
@@ -6943,8 +6922,8 @@ var init_esm4 = __esm({
         if (this.#hasDisposeAfter && this.#disposed) {
           const dt = this.#disposed;
           let task;
-          while (task = dt == null ? void 0 : dt.shift()) {
-            (_c = this.#disposeAfter) == null ? void 0 : _c.call(this, ...task);
+          while (task = dt?.shift()) {
+            this.#disposeAfter?.(...task);
           }
         }
       }
@@ -7170,10 +7149,9 @@ var init_esm5 = __esm({
       }
       // drop everything and get out of the flow completely
       [ABORT]() {
-        var _a2, _b;
         this[ABORTED] = true;
-        this.emit("abort", (_a2 = this[SIGNAL]) == null ? void 0 : _a2.reason);
-        this.destroy((_b = this[SIGNAL]) == null ? void 0 : _b.reason);
+        this.emit("abort", this[SIGNAL]?.reason);
+        this.destroy(this[SIGNAL]?.reason);
       }
       /**
        * True if the stream has been aborted.
@@ -7188,7 +7166,6 @@ var init_esm5 = __esm({
       set aborted(_) {
       }
       write(chunk, encoding, cb) {
-        var _a2;
         if (this[ABORTED])
           return false;
         if (this[EOF])
@@ -7234,7 +7211,7 @@ var init_esm5 = __esm({
           return this[FLOWING];
         }
         if (typeof chunk === "string" && // unless it is a string already ready for us to use
-        !(encoding === this[ENCODING] && !((_a2 = this[DECODER]) == null ? void 0 : _a2.lastNeed))) {
+        !(encoding === this[ENCODING] && !this[DECODER]?.lastNeed)) {
           chunk = Buffer.from(chunk, encoding);
         }
         if (Buffer.isBuffer(chunk) && this[ENCODING]) {
@@ -8424,7 +8401,6 @@ var init_esm6 = __esm({
        * Result is cached, and thus may be outdated if the filesystem is mutated.
        */
       async readlink() {
-        var _a2;
         const target = this.#linkTarget;
         if (target) {
           return target;
@@ -8437,7 +8413,7 @@ var init_esm6 = __esm({
         }
         try {
           const read = await this.#fs.promises.readlink(this.fullpath());
-          const linkTarget = (_a2 = await this.parent.realpath()) == null ? void 0 : _a2.resolve(read);
+          const linkTarget = (await this.parent.realpath())?.resolve(read);
           if (linkTarget) {
             return this.#linkTarget = linkTarget;
           }
@@ -8450,7 +8426,6 @@ var init_esm6 = __esm({
        * Synchronous {@link PathBase.readlink}
        */
       readlinkSync() {
-        var _a2;
         const target = this.#linkTarget;
         if (target) {
           return target;
@@ -8463,7 +8438,7 @@ var init_esm6 = __esm({
         }
         try {
           const read = this.#fs.readlinkSync(this.fullpath());
-          const linkTarget = (_a2 = this.parent.realpathSync()) == null ? void 0 : _a2.resolve(read);
+          const linkTarget = this.parent.realpathSync()?.resolve(read);
           if (linkTarget) {
             return this.#linkTarget = linkTarget;
           }
@@ -9193,7 +9168,7 @@ var init_esm6 = __esm({
           entry = this.cwd;
         }
         const e = await entry.readlink();
-        return withFileTypes ? e : e == null ? void 0 : e.fullpath();
+        return withFileTypes ? e : e?.fullpath();
       }
       readlinkSync(entry = this.cwd, { withFileTypes } = {
         withFileTypes: false
@@ -9205,7 +9180,7 @@ var init_esm6 = __esm({
           entry = this.cwd;
         }
         const e = entry.readlinkSync();
-        return withFileTypes ? e : e == null ? void 0 : e.fullpath();
+        return withFileTypes ? e : e?.fullpath();
       }
       async realpath(entry = this.cwd, { withFileTypes } = {
         withFileTypes: false
@@ -9217,7 +9192,7 @@ var init_esm6 = __esm({
           entry = this.cwd;
         }
         const e = await entry.realpath();
-        return withFileTypes ? e : e == null ? void 0 : e.fullpath();
+        return withFileTypes ? e : e?.fullpath();
       }
       realpathSync(entry = this.cwd, { withFileTypes } = {
         withFileTypes: false
@@ -9229,7 +9204,7 @@ var init_esm6 = __esm({
           entry = this.cwd;
         }
         const e = entry.realpathSync();
-        return withFileTypes ? e : e == null ? void 0 : e.fullpath();
+        return withFileTypes ? e : e?.fullpath();
       }
       async walk(entry = this.cwd, opts = {}) {
         if (typeof entry === "string") {
@@ -9263,7 +9238,7 @@ var init_esm6 = __esm({
                 results.push(withFileTypes ? e : e.fullpath());
               }
               if (follow && e.isSymbolicLink()) {
-                e.realpath().then((r) => (r == null ? void 0 : r.isUnknown()) ? r.lstat() : r).then((r) => (r == null ? void 0 : r.shouldWalk(dirs, walkFilter)) ? walk2(r, next) : next());
+                e.realpath().then((r) => r?.isUnknown() ? r.lstat() : r).then((r) => r?.shouldWalk(dirs, walkFilter) ? walk2(r, next) : next());
               } else {
                 if (e.shouldWalk(dirs, walkFilter)) {
                   walk2(e, next);
@@ -9409,7 +9384,7 @@ var init_esm6 = __esm({
                 const promises = [];
                 for (const e of entries) {
                   if (e.isSymbolicLink()) {
-                    promises.push(e.realpath().then((r) => (r == null ? void 0 : r.isUnknown()) ? r.lstat() : r));
+                    promises.push(e.realpath().then((r) => r?.isUnknown() ? r.lstat() : r));
                   }
                 }
                 if (promises.length) {
@@ -9856,8 +9831,7 @@ var init_processor = __esm({
         return new _HasWalkedCache(new Map(this.store));
       }
       hasWalked(target, pattern) {
-        var _a2;
-        return (_a2 = this.store.get(target.fullpath())) == null ? void 0 : _a2.has(pattern.globString());
+        return this.store.get(target.fullpath())?.has(pattern.globString());
       }
       storeWalked(target, pattern) {
         const fullpath = target.fullpath();
@@ -9969,8 +9943,8 @@ var init_processor = __esm({
             if (!t.isSymbolicLink() || this.follow || pattern.checkFollowGlobstar()) {
               this.subwalks.add(t, pattern);
             }
-            const rp = rest == null ? void 0 : rest.pattern();
-            const rrest = rest == null ? void 0 : rest.rest();
+            const rp = rest?.pattern();
+            const rrest = rest?.rest();
             if (!rest || (rp === "" || rp === ".") && !rrest) {
               this.matches.add(t, absolute, rp === "" || rp === ".");
             } else {
@@ -10113,20 +10087,17 @@ var init_walker = __esm({
         }
       }
       #ignored(path5) {
-        var _a2, _b;
-        return this.seen.has(path5) || !!((_b = (_a2 = this.#ignore) == null ? void 0 : _a2.ignored) == null ? void 0 : _b.call(_a2, path5));
+        return this.seen.has(path5) || !!this.#ignore?.ignored?.(path5);
       }
       #childrenIgnored(path5) {
-        var _a2, _b;
-        return !!((_b = (_a2 = this.#ignore) == null ? void 0 : _a2.childrenIgnored) == null ? void 0 : _b.call(_a2, path5));
+        return !!this.#ignore?.childrenIgnored?.(path5);
       }
       // backpressure mechanism
       pause() {
         this.paused = true;
       }
       resume() {
-        var _a2;
-        if ((_a2 = this.signal) == null ? void 0 : _a2.aborted)
+        if (this.signal?.aborted)
           return;
         this.paused = false;
         let fn = void 0;
@@ -10135,8 +10106,7 @@ var init_walker = __esm({
         }
       }
       onResume(fn) {
-        var _a2;
-        if ((_a2 = this.signal) == null ? void 0 : _a2.aborted)
+        if (this.signal?.aborted)
           return;
         if (!this.paused) {
           fn();
@@ -10158,7 +10128,7 @@ var init_walker = __esm({
         }
         const needStat = e.isUnknown() || this.opts.stat;
         const s = needStat ? await e.lstat() : e;
-        if (this.opts.follow && this.opts.nodir && (s == null ? void 0 : s.isSymbolicLink())) {
+        if (this.opts.follow && this.opts.nodir && s?.isSymbolicLink()) {
           const target = await s.realpath();
           if (target && (target.isUnknown() || this.opts.stat)) {
             await target.lstat();
@@ -10167,8 +10137,7 @@ var init_walker = __esm({
         return this.matchCheckTest(s, ifDir);
       }
       matchCheckTest(e, ifDir) {
-        var _a2;
-        return e && (this.maxDepth === Infinity || e.depth() <= this.maxDepth) && (!ifDir || e.canReaddir()) && (!this.opts.nodir || !e.isDirectory()) && (!this.opts.nodir || !this.opts.follow || !e.isSymbolicLink() || !((_a2 = e.realpathCached()) == null ? void 0 : _a2.isDirectory())) && !this.#ignored(e) ? e : void 0;
+        return e && (this.maxDepth === Infinity || e.depth() <= this.maxDepth) && (!ifDir || e.canReaddir()) && (!this.opts.nodir || !e.isDirectory()) && (!this.opts.nodir || !this.opts.follow || !e.isSymbolicLink() || !e.realpathCached()?.isDirectory()) && !this.#ignored(e) ? e : void 0;
       }
       matchCheckSync(e, ifDir) {
         if (ifDir && this.opts.nodir)
@@ -10182,19 +10151,18 @@ var init_walker = __esm({
         }
         const needStat = e.isUnknown() || this.opts.stat;
         const s = needStat ? e.lstatSync() : e;
-        if (this.opts.follow && this.opts.nodir && (s == null ? void 0 : s.isSymbolicLink())) {
+        if (this.opts.follow && this.opts.nodir && s?.isSymbolicLink()) {
           const target = s.realpathSync();
-          if (target && ((target == null ? void 0 : target.isUnknown()) || this.opts.stat)) {
+          if (target && (target?.isUnknown() || this.opts.stat)) {
             target.lstatSync();
           }
         }
         return this.matchCheckTest(s, ifDir);
       }
       matchFinish(e, absolute) {
-        var _a2;
         if (this.#ignored(e))
           return;
-        if (!this.includeChildMatches && ((_a2 = this.#ignore) == null ? void 0 : _a2.add)) {
+        if (!this.includeChildMatches && this.#ignore?.add) {
           const ign = `${e.relativePosix()}/**`;
           this.#ignore.add(ign);
         }
@@ -10223,16 +10191,14 @@ var init_walker = __esm({
           this.matchFinish(p, absolute);
       }
       walkCB(target, patterns, cb) {
-        var _a2;
-        if ((_a2 = this.signal) == null ? void 0 : _a2.aborted)
+        if (this.signal?.aborted)
           cb();
         this.walkCB2(target, patterns, new Processor(this.opts), cb);
       }
       walkCB2(target, patterns, processor, cb) {
-        var _a2;
         if (this.#childrenIgnored(target))
           return cb();
-        if ((_a2 = this.signal) == null ? void 0 : _a2.aborted)
+        if (this.signal?.aborted)
           cb();
         if (this.paused) {
           this.onResume(() => this.walkCB2(target, patterns, processor, cb));
@@ -10284,16 +10250,14 @@ var init_walker = __esm({
         next();
       }
       walkCBSync(target, patterns, cb) {
-        var _a2;
-        if ((_a2 = this.signal) == null ? void 0 : _a2.aborted)
+        if (this.signal?.aborted)
           cb();
         this.walkCB2Sync(target, patterns, new Processor(this.opts), cb);
       }
       walkCB2Sync(target, patterns, processor, cb) {
-        var _a2;
         if (this.#childrenIgnored(target))
           return cb();
-        if ((_a2 = this.signal) == null ? void 0 : _a2.aborted)
+        if (this.signal?.aborted)
           cb();
         if (this.paused) {
           this.onResume(() => this.walkCB2Sync(target, patterns, processor, cb));
@@ -10348,16 +10312,14 @@ var init_walker = __esm({
         this.matches.add(e);
       }
       async walk() {
-        var _a2;
-        if ((_a2 = this.signal) == null ? void 0 : _a2.aborted)
+        if (this.signal?.aborted)
           throw this.signal.reason;
         if (this.path.isUnknown()) {
           await this.path.lstat();
         }
         await new Promise((res, rej) => {
           this.walkCB(this.path, this.patterns, () => {
-            var _a3;
-            if ((_a3 = this.signal) == null ? void 0 : _a3.aborted) {
+            if (this.signal?.aborted) {
               rej(this.signal.reason);
             } else {
               res(this.matches);
@@ -10367,15 +10329,13 @@ var init_walker = __esm({
         return this.matches;
       }
       walkSync() {
-        var _a2;
-        if ((_a2 = this.signal) == null ? void 0 : _a2.aborted)
+        if (this.signal?.aborted)
           throw this.signal.reason;
         if (this.path.isUnknown()) {
           this.path.lstatSync();
         }
         this.walkCBSync(this.path, this.patterns, () => {
-          var _a3;
-          if ((_a3 = this.signal) == null ? void 0 : _a3.aborted)
+          if (this.signal?.aborted)
             throw this.signal.reason;
         });
         return this.matches;
@@ -10742,7 +10702,7 @@ var init_version = __esm({
 
 // .yarn/__virtual__/viem-virtual-9f2f5f3032/4/.yarn/berry/cache/viem-npm-2.31.4-c16a9e3510-10c0.zip/node_modules/viem/_esm/errors/base.js
 function walk(err, fn) {
-  if (fn == null ? void 0 : fn(err))
+  if (fn?.(err))
     return err;
   if (err && typeof err === "object" && "cause" in err && err.cause !== void 0)
     return walk(err.cause, fn);
@@ -10758,12 +10718,10 @@ var init_base = __esm({
     };
     BaseError = class _BaseError extends Error {
       constructor(shortMessage, args = {}) {
-        var _a2;
         const details = (() => {
-          var _a3;
           if (args.cause instanceof _BaseError)
             return args.cause.details;
-          if ((_a3 = args.cause) == null ? void 0 : _a3.message)
+          if (args.cause?.message)
             return args.cause.message;
           return args.details;
         })();
@@ -10772,7 +10730,7 @@ var init_base = __esm({
             return args.cause.docsPath || args.docsPath;
           return args.docsPath;
         })();
-        const docsUrl = (_a2 = errorConfig.getDocsUrl) == null ? void 0 : _a2.call(errorConfig, { ...args, docsPath });
+        const docsUrl = errorConfig.getDocsUrl?.({ ...args, docsPath });
         const message = [
           shortMessage || "An error occurred.",
           "",

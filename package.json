@@ -51,7 +51,7 @@
   },
   "type": "commonjs",
   "scripts": {
-    "build": "yarn clean && esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node --target=node16",
+    "build": "yarn clean && esbuild src/index.ts --bundle --outfile=dist/index.js --platform=node",
     "clean": "rm -rf dist",
     "lint": "eslint . --ext .ts",
     "format": "prettier --write .",
