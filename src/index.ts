@@ -54,4 +54,21 @@ program
     }
   });
 
+// Add transform-abi command
+program
+  .command('transform-abi')
+  .description('Transform Solidity contract ABI JSON files to TypeScript files')
+  .option('-s, --src-dir <path>', 'Source directory containing .sol files', 'src')
+  .option('-o, --out-dir <path>', 'Forge output directory containing ABI files', 'out')
+  .option('-a, --abis-dir <path>', 'Output directory for TypeScript ABI files', 'abis')
+  .action(async (options) => {
+    const { executeTransformAbi } = await import('./transform-abi.js');
+    try {
+      await executeTransformAbi(options);
+    } catch (err) {
+      console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
+      process.exit(1);
+    }
+  });
+
 program.parse(process.argv);

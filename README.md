@@ -6,6 +6,7 @@ A collection of development tools for blockchain and Ethereum projects, designed
 
 - **JSON Formatting**: Format JSON files with key sorting and Ethereum address checksumming
 - **Solidity Import Sorting**: Automatically sort import statements in Solidity files
+- **ABI Transformation**: Transform Solidity contract ABI JSON files to TypeScript files with proper typing
 
 ## Installation
 
@@ -71,6 +72,35 @@ mito-tools sort-imports -i "src/**/*.sol" --debug
 - Automatically runs `forge fmt` before and after processing
 - Respects existing import groupings
 
+### Transform ABI Files
+
+Transform Solidity contract ABI JSON files from Forge output to TypeScript files:
+
+```bash
+# Transform all ABIs using default directories
+mito-tools transform-abi
+
+# Specify custom directories
+mito-tools transform-abi --src-dir contracts --out-dir forge-out --abis-dir generated-abis
+
+# Using short options
+mito-tools transform-abi -s contracts -o forge-out -a generated-abis
+```
+
+**Features:**
+
+- Finds all Solidity contracts in the source directory
+- Locates corresponding ABI JSON files in Forge output directory
+- Generates TypeScript files with proper const assertions
+- Preserves source directory structure in output
+- Provides detailed progress and error reporting
+
+**Options:**
+
+- `-s, --src-dir <path>`: Source directory containing .sol files (default: "src")
+- `-o, --out-dir <path>`: Forge output directory containing ABI files (default: "out")
+- `-a, --abis-dir <path>`: Output directory for TypeScript ABI files (default: "abis")
+
 ## Requirements
 
 - Node.js >= 16
@@ -123,3 +153,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - Initial release
 - JSON formatting with Ethereum address checksumming
 - Solidity import sorting with Foundry remapping support
+- ABI transformation from JSON to TypeScript
