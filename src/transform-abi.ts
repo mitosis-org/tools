@@ -222,7 +222,19 @@ function generateRootIndex(
     if (dir === '.') continue;
 
     const pathParts = dir.split(path.sep);
-    const importAlias = pathParts.join('_') + '_exports';
+    // Convert to camelCase: my-contracts -> myContractsExports
+    const camelCaseParts = pathParts.map((part, index) => {
+      const words = part.split('-');
+      return words
+        .map((word, wordIndex) => {
+          if (index === 0 && wordIndex === 0) {
+            return word; // Keep first word lowercase
+          }
+          return word.charAt(0).toUpperCase() + word.slice(1);
+        })
+        .join('');
+    });
+    const importAlias = camelCaseParts.join('') + 'Exports';
     const importPath = `./${dir}/index.js`;
 
     imports.push(
@@ -256,10 +268,7 @@ function generateRootIndex(
         : `'${key}'`;
 
       if (typeof value === 'string') {
-        // Direct import reference - check if it's an import alias that needs spreading
-        if (value.endsWith('_exports')) {
-          return `${spaces}${quotedKey}: ...${value},`;
-        }
+        // Direct import reference
         return `${spaces}${quotedKey}: ${value},`;
       } else {
         // Nested object
@@ -276,12 +285,7 @@ function generateRootIndex(
     const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
 
     if (typeof value === 'string') {
-      // Check if it's an import alias that needs spreading
-      if (value.endsWith('_exports')) {
-        exports.push(`  ${quotedKey}: ...${value},`);
-      } else {
-        exports.push(`  ${quotedKey}: ${value},`);
-      }
+      exports.push(`  ${quotedKey}: ${value},`);
     } else {
       const nestedContent = stringifyExports(value as ExportStructure, 4);
       exports.push(`  ${quotedKey}: ${nestedContent},`);

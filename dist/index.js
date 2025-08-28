@@ -469,7 +469,16 @@ function generateRootIndex(abisDir, contractsByDir, sortedDirs) {
   for (const dir of sortedDirs) {
     if (dir === ".") continue;
     const pathParts = dir.split(path4.sep);
-    const importAlias = pathParts.join("_") + "_exports";
+    const camelCaseParts = pathParts.map((part, index) => {
+      const words = part.split("-");
+      return words.map((word, wordIndex) => {
+        if (index === 0 && wordIndex === 0) {
+          return word;
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      }).join("");
+    });
+    const importAlias = camelCaseParts.join("") + "Exports";
     const importPath = `./${dir}/index.js`;
     imports.push(
       `import * as ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
@@ -491,9 +500,6 @@ function generateRootIndex(abisDir, contractsByDir, sortedDirs) {
     const lines = entries.map(([key, value]) => {
       const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
       if (typeof value === "string") {
-        if (value.endsWith("_exports")) {
-          return `${spaces}${quotedKey}: ...${value},`;
-        }
         return `${spaces}${quotedKey}: ${value},`;
       } else {
         const nestedContent = stringifyExports(value, indent + 2);
@@ -507,11 +513,7 @@ ${" ".repeat(indent - 2)}}`;
   for (const [key, value] of Object.entries(nestedExports)) {
     const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
     if (typeof value === "string") {
-      if (value.endsWith("_exports")) {
-        exports2.push(`  ${quotedKey}: ...${value},`);
-      } else {
-        exports2.push(`  ${quotedKey}: ${value},`);
-      }
+      exports2.push(`  ${quotedKey}: ${value},`);
     } else {
       const nestedContent = stringifyExports(value, 4);
       exports2.push(`  ${quotedKey}: ${nestedContent},`);

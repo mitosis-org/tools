@@ -159,13 +159,13 @@ export {
 
 ```typescript
 import TokenAbi from './Token.js';
-import * as my_contracts_exports from './my-contracts/index.js';
-import * as governance_exports from './governance/index.js';
+import * as governanceExports from './governance/index.js';
+import * as myContractsExports from './my-contracts/index.js';
 
 export default {
   Token: TokenAbi,
-  'my-contracts': ...my_contracts_exports,
-  governance: ...governance_exports,
+  'my-contracts': myContractsExports,
+  governance: governanceExports,
 };
 ```
 
