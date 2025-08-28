@@ -110,6 +110,7 @@ Given this source structure:
 src/
 ├── Token.sol
 ├── my-contracts/
+│   ├── Token.sol
 │   └── Staking.sol
 └── governance/
     └── Governor.sol
@@ -121,31 +122,54 @@ The tool generates:
 abis/
 ├── Token.ts
 ├── my-contracts/
-│   └── Staking.ts
+│   ├── Token.ts
+│   ├── Staking.ts
+│   └── index.ts
 ├── governance/
-│   └── Governor.ts
+│   ├── Governor.ts
+│   └── index.ts
 └── index.ts
 ```
 
-The generated `index.ts` file exports all ABIs:
+Each directory gets its own `index.ts` file to avoid naming conflicts:
+
+**`abis/my-contracts/index.ts`:**
 
 ```typescript
 import TokenAbi from './Token.js';
-import GovernorAbi from './governance/Governor.js';
-import StakingAbi from './my-contracts/Staking.js';
+import StakingAbi from './Staking.js';
 
-export default {
+export {
   Token: TokenAbi,
-  'my-contracts': {
-    Staking: StakingAbi,
-  },
-  governance: {
-    Governor: GovernorAbi,
-  },
+  Staking: StakingAbi,
 };
 ```
 
-Note: Directory names with special characters (like dashes) are automatically quoted in the export object.
+**`abis/governance/index.ts`:**
+
+```typescript
+import GovernorAbi from './Governor.js';
+
+export {
+  Governor: GovernorAbi,
+};
+```
+
+**Root `abis/index.ts`:**
+
+```typescript
+import TokenAbi from './Token.js';
+import * as my_contracts_exports from './my-contracts/index.js';
+import * as governance_exports from './governance/index.js';
+
+export default {
+  Token: TokenAbi,
+  'my-contracts': ...my_contracts_exports,
+  governance: ...governance_exports,
+};
+```
+
+Note: This approach handles duplicate contract names across directories (e.g., `Token.sol` in both root and `my-contracts/`) without conflicts.
 
 ## Requirements
 

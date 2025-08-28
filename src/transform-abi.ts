@@ -104,127 +104,205 @@ export default abi;
 }
 
 /**
- * Generates an index.ts file that exports all ABI constants
+ * Generates index.ts files for each directory that exports all ABI constants
  */
-function generateIndexFile(abisDir: string, contracts: ContractInfo[]): void {
+function generateIndexFiles(abisDir: string, contracts: ContractInfo[]): void {
   const t = hrtime();
 
   try {
-    // Sort contracts for deterministic output
-    const sortedContracts = [...contracts].sort((a, b) =>
-      a.srcPath.localeCompare(b.srcPath),
-    );
+    // Group contracts by directory
+    const contractsByDir = new Map<string, ContractInfo[]>();
 
-    // Generate imports with unique names
-    const imports: string[] = [];
-    const nameCounter = new Map<string, number>();
-
-    // Build a nested structure for exports
-    interface ExportStructure {
-      [key: string]: string | ExportStructure;
-    }
-    const exportStructure: ExportStructure = {};
-
-    for (const contract of sortedContracts) {
+    for (const contract of contracts) {
       const dir = path.dirname(contract.srcPath);
-      const importPath =
-        dir === '.'
-          ? `./${contract.contractName}`
-          : `./${path.join(dir, contract.contractName)}`;
-
-      // Generate unique import name to avoid conflicts
-      let importName = `${contract.contractName}Abi`;
-      const baseImportName = importName;
-      let counter = nameCounter.get(baseImportName) || 0;
-      if (counter > 0) {
-        importName = `${baseImportName}${counter}`;
+      if (!contractsByDir.has(dir)) {
+        contractsByDir.set(dir, []);
       }
-      nameCounter.set(baseImportName, counter + 1);
-
-      imports.push(
-        `import ${importName} from '${importPath.replace(/\\/g, '/')}.js';`,
-      );
-
-      // Build nested structure
-      if (dir === '.') {
-        // Root level contracts
-        exportStructure[contract.contractName] = importName;
-      } else {
-        // Nested contracts - create nested objects
-        const pathParts = dir.split(path.sep);
-        let current = exportStructure;
-
-        // Navigate/create the nested structure
-        for (let i = 0; i < pathParts.length; i++) {
-          const part = pathParts[i];
-          if (!current[part]) {
-            current[part] = {};
-          }
-          // Type assertion to navigate nested structure
-          current = current[part] as ExportStructure;
-        }
-
-        // Add the contract to the deepest level
-        current[contract.contractName] = importName;
-      }
+      contractsByDir.get(dir)!.push(contract);
     }
 
-    // Convert the export structure to string
-    function stringifyExports(
-      obj: ExportStructure,
-      indent: number = 2,
-    ): string {
-      const spaces = ' '.repeat(indent);
-      const entries = Object.entries(obj).sort(([a], [b]) =>
-        a.localeCompare(b),
-      );
+    // Sort directories for consistent output
+    const sortedDirs = Array.from(contractsByDir.keys()).sort();
 
-      if (entries.length === 0) return '{}';
+    // Generate index.ts for each directory that has contracts
+    for (const dir of sortedDirs) {
+      if (dir === '.') continue; // Skip root directory for now
 
-      const lines = entries.map(([key, value]) => {
-        // Quote key if it contains special characters
-        const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
-          ? key
-          : `'${key}'`;
-
-        if (typeof value === 'string') {
-          // Direct import reference
-          return `${spaces}${quotedKey}: ${value},`;
-        } else {
-          // Nested object
-          const nestedContent = stringifyExports(value, indent + 2);
-          return `${spaces}${quotedKey}: ${nestedContent},`;
-        }
-      });
-
-      return `{\n${lines.join('\n')}\n${' '.repeat(indent - 2)}}`;
+      const dirContracts = contractsByDir.get(dir)!;
+      generateDirectoryIndex(abisDir, dir, dirContracts);
     }
 
-    // Generate the index.ts content
-    const exportContent = stringifyExports(exportStructure);
-    const indexContent = `${imports.join('\n')}
-
-export default ${exportContent};
-`;
-
-    // Write the index.ts file
-    const indexPath = path.join(abisDir, 'index.ts');
-    fs.writeFileSync(indexPath, indexContent, 'utf8');
+    // Generate root index.ts
+    generateRootIndex(abisDir, contractsByDir, sortedDirs);
 
     console.log(
-      chalk.green('✅'),
-      chalk.gray('index.ts →'),
-      path.relative(process.cwd(), indexPath),
+      chalk.green('✨'),
+      `Generated ${sortedDirs.length} index.ts files`,
       `${timeDiff(t)}ms`,
     );
   } catch (error) {
     console.error(
       chalk.red('❌'),
-      'Error generating index.ts:',
+      'Error generating index files:',
       error instanceof Error ? error.message : error,
     );
     throw error;
   }
+}
+
+/**
+ * Generates index.ts for a specific directory
+ */
+function generateDirectoryIndex(
+  abisDir: string,
+  dir: string,
+  contracts: ContractInfo[],
+): void {
+  const imports: string[] = [];
+  const exports: string[] = [];
+
+  // Sort contracts for consistent output
+  const sortedContracts = [...contracts].sort((a, b) =>
+    a.contractName.localeCompare(b.contractName),
+  );
+
+  for (const contract of sortedContracts) {
+    const importName = `${contract.contractName}Abi`;
+    imports.push(`import ${importName} from './${contract.contractName}.js';`);
+    exports.push(`  ${contract.contractName}: ${importName},`);
+  }
+
+  const content = `${imports.join('\n')}
+
+export {
+${exports.join('\n')}
+};
+`;
+
+  const indexPath = path.join(abisDir, dir, 'index.ts');
+  fs.writeFileSync(indexPath, content, 'utf8');
+
+  console.log(
+    chalk.green('✅'),
+    chalk.gray(`${dir}/index.ts →`),
+    path.relative(process.cwd(), indexPath),
+  );
+}
+
+/**
+ * Generates the root index.ts file
+ */
+function generateRootIndex(
+  abisDir: string,
+  contractsByDir: Map<string, ContractInfo[]>,
+  sortedDirs: string[],
+): void {
+  const imports: string[] = [];
+  const exports: string[] = [];
+
+  // Handle root level contracts
+  const rootContracts = contractsByDir.get('.') || [];
+  const sortedRootContracts = [...rootContracts].sort((a, b) =>
+    a.contractName.localeCompare(b.contractName),
+  );
+
+  for (const contract of sortedRootContracts) {
+    const importName = `${contract.contractName}Abi`;
+    imports.push(`import ${importName} from './${contract.contractName}.js';`);
+    exports.push(`  ${contract.contractName}: ${importName},`);
+  }
+
+  // Handle subdirectories
+  interface ExportStructure {
+    [key: string]: string | ExportStructure;
+  }
+  const nestedExports: ExportStructure = {};
+
+  for (const dir of sortedDirs) {
+    if (dir === '.') continue;
+
+    const pathParts = dir.split(path.sep);
+    const importAlias = pathParts.join('_') + '_exports';
+    const importPath = `./${dir}/index.js`;
+
+    imports.push(
+      `import * as ${importAlias} from '${importPath.replace(/\\/g, '/')}';`,
+    );
+
+    // Build nested structure
+    let current = nestedExports;
+    for (let i = 0; i < pathParts.length - 1; i++) {
+      const part = pathParts[i];
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part] as ExportStructure;
+    }
+
+    // Add the import to the deepest level
+    current[pathParts[pathParts.length - 1]] = importAlias;
+  }
+
+  // Convert nested structure to export lines
+  function stringifyExports(obj: ExportStructure, indent: number = 2): string {
+    const spaces = ' '.repeat(indent);
+    const entries = Object.entries(obj).sort(([a], [b]) => a.localeCompare(b));
+
+    if (entries.length === 0) return '{}';
+
+    const lines = entries.map(([key, value]) => {
+      const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
+        ? key
+        : `'${key}'`;
+
+      if (typeof value === 'string') {
+        // Direct import reference - check if it's an import alias that needs spreading
+        if (value.endsWith('_exports')) {
+          return `${spaces}${quotedKey}: ...${value},`;
+        }
+        return `${spaces}${quotedKey}: ${value},`;
+      } else {
+        // Nested object
+        const nestedContent = stringifyExports(value, indent + 2);
+        return `${spaces}${quotedKey}: ${nestedContent},`;
+      }
+    });
+
+    return `{\n${lines.join('\n')}\n${' '.repeat(indent - 2)}}`;
+  }
+
+  // Add nested exports to the main exports
+  for (const [key, value] of Object.entries(nestedExports)) {
+    const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
+
+    if (typeof value === 'string') {
+      // Check if it's an import alias that needs spreading
+      if (value.endsWith('_exports')) {
+        exports.push(`  ${quotedKey}: ...${value},`);
+      } else {
+        exports.push(`  ${quotedKey}: ${value},`);
+      }
+    } else {
+      const nestedContent = stringifyExports(value as ExportStructure, 4);
+      exports.push(`  ${quotedKey}: ${nestedContent},`);
+    }
+  }
+
+  const content = `${imports.join('\n')}
+
+export default {
+${exports.join('\n')}
+};
+`;
+
+  const indexPath = path.join(abisDir, 'index.ts');
+  fs.writeFileSync(indexPath, content, 'utf8');
+
+  console.log(
+    chalk.green('✅'),
+    chalk.gray('index.ts →'),
+    path.relative(process.cwd(), indexPath),
+  );
 }
 
 /**
@@ -296,11 +374,11 @@ export async function executeTransformAbi(options: {
     );
   }
 
-  // Generate index.ts file if we have successful transformations
+  // Generate index.ts files if we have successful transformations
   if (successCount > 0) {
-    console.log(chalk.blue('\n📝'), 'Generating index.ts file...');
+    console.log(chalk.blue('\n📝'), 'Generating index.ts files...');
     try {
-      generateIndexFile(
+      generateIndexFiles(
         abisDir,
         contracts.filter(() => {
           // Only include contracts that were successfully transformed
@@ -311,7 +389,7 @@ export async function executeTransformAbi(options: {
     } catch (error) {
       console.error(
         chalk.red('❌'),
-        'Failed to generate index.ts:',
+        'Failed to generate index.ts files:',
         error instanceof Error ? error.message : error,
       );
     }

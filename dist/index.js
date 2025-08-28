@@ -396,84 +396,140 @@ export default abi;
     throw error;
   }
 }
-function generateIndexFile(abisDir, contracts) {
+function generateIndexFiles(abisDir, contracts) {
   const t = hrtime();
   try {
-    let stringifyExports2 = function(obj, indent = 2) {
-      const spaces = " ".repeat(indent);
-      const entries = Object.entries(obj).sort(
-        ([a], [b]) => a.localeCompare(b)
-      );
-      if (entries.length === 0) return "{}";
-      const lines = entries.map(([key, value]) => {
-        const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
-        if (typeof value === "string") {
-          return `${spaces}${quotedKey}: ${value},`;
-        } else {
-          const nestedContent = stringifyExports2(value, indent + 2);
-          return `${spaces}${quotedKey}: ${nestedContent},`;
-        }
-      });
-      return `{
-${lines.join("\n")}
-${" ".repeat(indent - 2)}}`;
-    };
-    var stringifyExports = stringifyExports2;
-    const sortedContracts = [...contracts].sort(
-      (a, b) => a.srcPath.localeCompare(b.srcPath)
-    );
-    const imports = [];
-    const nameCounter = /* @__PURE__ */ new Map();
-    const exportStructure = {};
-    for (const contract of sortedContracts) {
+    const contractsByDir = /* @__PURE__ */ new Map();
+    for (const contract of contracts) {
       const dir = path4.dirname(contract.srcPath);
-      const importPath = dir === "." ? `./${contract.contractName}` : `./${path4.join(dir, contract.contractName)}`;
-      let importName = `${contract.contractName}Abi`;
-      const baseImportName = importName;
-      let counter = nameCounter.get(baseImportName) || 0;
-      if (counter > 0) {
-        importName = `${baseImportName}${counter}`;
+      if (!contractsByDir.has(dir)) {
+        contractsByDir.set(dir, []);
       }
-      nameCounter.set(baseImportName, counter + 1);
-      imports.push(
-        `import ${importName} from '${importPath.replace(/\\/g, "/")}.js';`
-      );
-      if (dir === ".") {
-        exportStructure[contract.contractName] = importName;
-      } else {
-        const pathParts = dir.split(path4.sep);
-        let current = exportStructure;
-        for (let i = 0; i < pathParts.length; i++) {
-          const part = pathParts[i];
-          if (!current[part]) {
-            current[part] = {};
-          }
-          current = current[part];
-        }
-        current[contract.contractName] = importName;
-      }
+      contractsByDir.get(dir).push(contract);
     }
-    const exportContent = stringifyExports2(exportStructure);
-    const indexContent = `${imports.join("\n")}
-
-export default ${exportContent};
-`;
-    const indexPath = path4.join(abisDir, "index.ts");
-    fs4.writeFileSync(indexPath, indexContent, "utf8");
+    const sortedDirs = Array.from(contractsByDir.keys()).sort();
+    for (const dir of sortedDirs) {
+      if (dir === ".") continue;
+      const dirContracts = contractsByDir.get(dir);
+      generateDirectoryIndex(abisDir, dir, dirContracts);
+    }
+    generateRootIndex(abisDir, contractsByDir, sortedDirs);
     console.log(
-      import_chalk3.default.green("\u2705"),
-      import_chalk3.default.gray("index.ts \u2192"),
-      path4.relative(process.cwd(), indexPath),
+      import_chalk3.default.green("\u2728"),
+      `Generated ${sortedDirs.length} index.ts files`,
       `${timeDiff(t)}ms`
     );
   } catch (error) {
     console.error(
       import_chalk3.default.red("\u274C"),
-      "Error generating index.ts:",
+      "Error generating index files:",
       error instanceof Error ? error.message : error
     );
     throw error;
   }
+}
+function generateDirectoryIndex(abisDir, dir, contracts) {
+  const imports = [];
+  const exports2 = [];
+  const sortedContracts = [...contracts].sort(
+    (a, b) => a.contractName.localeCompare(b.contractName)
+  );
+  for (const contract of sortedContracts) {
+    const importName = `${contract.contractName}Abi`;
+    imports.push(`import ${importName} from './${contract.contractName}.js';`);
+    exports2.push(`  ${contract.contractName}: ${importName},`);
+  }
+  const content = `${imports.join("\n")}
+
+export {
+${exports2.join("\n")}
+};
+`;
+  const indexPath = path4.join(abisDir, dir, "index.ts");
+  fs4.writeFileSync(indexPath, content, "utf8");
+  console.log(
+    import_chalk3.default.green("\u2705"),
+    import_chalk3.default.gray(`${dir}/index.ts \u2192`),
+    path4.relative(process.cwd(), indexPath)
+  );
+}
+function generateRootIndex(abisDir, contractsByDir, sortedDirs) {
+  const imports = [];
+  const exports2 = [];
+  const rootContracts = contractsByDir.get(".") || [];
+  const sortedRootContracts = [...rootContracts].sort(
+    (a, b) => a.contractName.localeCompare(b.contractName)
+  );
+  for (const contract of sortedRootContracts) {
+    const importName = `${contract.contractName}Abi`;
+    imports.push(`import ${importName} from './${contract.contractName}.js';`);
+    exports2.push(`  ${contract.contractName}: ${importName},`);
+  }
+  const nestedExports = {};
+  for (const dir of sortedDirs) {
+    if (dir === ".") continue;
+    const pathParts = dir.split(path4.sep);
+    const importAlias = pathParts.join("_") + "_exports";
+    const importPath = `./${dir}/index.js`;
+    imports.push(
+      `import * as ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
+    );
+    let current = nestedExports;
+    for (let i = 0; i < pathParts.length - 1; i++) {
+      const part = pathParts[i];
+      if (!current[part]) {
+        current[part] = {};
+      }
+      current = current[part];
+    }
+    current[pathParts[pathParts.length - 1]] = importAlias;
+  }
+  function stringifyExports(obj, indent = 2) {
+    const spaces = " ".repeat(indent);
+    const entries = Object.entries(obj).sort(([a], [b]) => a.localeCompare(b));
+    if (entries.length === 0) return "{}";
+    const lines = entries.map(([key, value]) => {
+      const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
+      if (typeof value === "string") {
+        if (value.endsWith("_exports")) {
+          return `${spaces}${quotedKey}: ...${value},`;
+        }
+        return `${spaces}${quotedKey}: ${value},`;
+      } else {
+        const nestedContent = stringifyExports(value, indent + 2);
+        return `${spaces}${quotedKey}: ${nestedContent},`;
+      }
+    });
+    return `{
+${lines.join("\n")}
+${" ".repeat(indent - 2)}}`;
+  }
+  for (const [key, value] of Object.entries(nestedExports)) {
+    const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
+    if (typeof value === "string") {
+      if (value.endsWith("_exports")) {
+        exports2.push(`  ${quotedKey}: ...${value},`);
+      } else {
+        exports2.push(`  ${quotedKey}: ${value},`);
+      }
+    } else {
+      const nestedContent = stringifyExports(value, 4);
+      exports2.push(`  ${quotedKey}: ${nestedContent},`);
+    }
+  }
+  const content = `${imports.join("\n")}
+
+export default {
+${exports2.join("\n")}
+};
+`;
+  const indexPath = path4.join(abisDir, "index.ts");
+  fs4.writeFileSync(indexPath, content, "utf8");
+  console.log(
+    import_chalk3.default.green("\u2705"),
+    import_chalk3.default.gray("index.ts \u2192"),
+    path4.relative(process.cwd(), indexPath)
+  );
 }
 async function executeTransformAbi(options) {
   const t = hrtime();
@@ -526,9 +582,9 @@ async function executeTransformAbi(options) {
     );
   }
   if (successCount > 0) {
-    console.log(import_chalk3.default.blue("\n\u{1F4DD}"), "Generating index.ts file...");
+    console.log(import_chalk3.default.blue("\n\u{1F4DD}"), "Generating index.ts files...");
     try {
-      generateIndexFile(
+      generateIndexFiles(
         abisDir,
         contracts.filter(() => {
           return true;
@@ -537,7 +593,7 @@ async function executeTransformAbi(options) {
     } catch (error) {
       console.error(
         import_chalk3.default.red("\u274C"),
-        "Failed to generate index.ts:",
+        "Failed to generate index.ts files:",
         error instanceof Error ? error.message : error
       );
     }
