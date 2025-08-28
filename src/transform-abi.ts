@@ -129,7 +129,7 @@ function generateIndexFiles(abisDir: string, contracts: ContractInfo[]): void {
       if (dir === '.') continue; // Skip root directory for now
 
       const dirContracts = contractsByDir.get(dir)!;
-      generateDirectoryIndex(abisDir, dir, dirContracts);
+      generateDirectoryIndex(abisDir, dir, dirContracts, contracts);
     }
 
     // Generate root index.ts
@@ -157,6 +157,7 @@ function generateDirectoryIndex(
   abisDir: string,
   dir: string,
   contracts: ContractInfo[],
+  allContracts: ContractInfo[],
 ): void {
   const imports: string[] = [];
   const exports: string[] = [];
@@ -166,10 +167,54 @@ function generateDirectoryIndex(
     a.contractName.localeCompare(b.contractName),
   );
 
+  // Import direct contracts
   for (const contract of sortedContracts) {
     const importName = `${contract.contractName}Abi`;
     imports.push(`import ${importName} from './${contract.contractName}.js';`);
     exports.push(`  ${contract.contractName}: ${importName},`);
+  }
+
+  // Find subdirectories of the current directory
+  const subdirs = new Set<string>();
+  for (const contract of allContracts) {
+    const contractDir = path.dirname(contract.srcPath);
+    // Check if this contract is in a subdirectory of the current directory
+    if (contractDir.startsWith(dir + path.sep)) {
+      const relativePath = contractDir.slice(dir.length + 1);
+      const firstSubdir = relativePath.split(path.sep)[0];
+      if (firstSubdir) {
+        subdirs.add(firstSubdir);
+      }
+    }
+  }
+
+  // Sort subdirectories for consistent output
+  const sortedSubdirs = Array.from(subdirs).sort();
+
+  // Import from subdirectory index.ts files
+  for (const subdir of sortedSubdirs) {
+    // Convert to camelCase for import alias
+    const words = subdir.split('-');
+    const camelCase = words
+      .map((word, index) => {
+        if (index === 0) {
+          return word;
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join('');
+    const importAlias = camelCase + 'Exports';
+    const importPath = `./${subdir}/index.js`;
+
+    imports.push(
+      `import * as ${importAlias} from '${importPath.replace(/\\/g, '/')}';`,
+    );
+
+    // Add to exports
+    const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(subdir)
+      ? subdir
+      : `'${subdir}'`;
+    exports.push(`  ${quotedKey}: ${importAlias},`);
   }
 
   const content = `${imports.join('\n')}
