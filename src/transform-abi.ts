@@ -121,14 +121,35 @@ function generateIndexFiles(abisDir: string, contracts: ContractInfo[]): void {
       contractsByDir.get(dir)!.push(contract);
     }
 
-    // Sort directories for consistent output
-    const sortedDirs = Array.from(contractsByDir.keys()).sort();
+    // Find all directories that need index files (including intermediate ones)
+    const allDirs = new Set<string>();
 
-    // Generate index.ts for each directory that has contracts
+    for (const contract of contracts) {
+      const dir = path.dirname(contract.srcPath);
+      const parts = dir.split(path.sep);
+
+      // Add all parent directories
+      for (let i = 1; i <= parts.length; i++) {
+        const parentDir = parts.slice(0, i).join(path.sep);
+        if (parentDir !== '.') {
+          allDirs.add(parentDir);
+        }
+      }
+    }
+
+    // Sort directories by depth (deepest first) to ensure subdirectories are processed before parents
+    const sortedDirs = Array.from(allDirs).sort((a, b) => {
+      const depthA = a.split(path.sep).length;
+      const depthB = b.split(path.sep).length;
+      if (depthA !== depthB) {
+        return depthB - depthA; // Deeper directories first
+      }
+      return a.localeCompare(b);
+    });
+
+    // Generate index.ts for each directory
     for (const dir of sortedDirs) {
-      if (dir === '.') continue; // Skip root directory for now
-
-      const dirContracts = contractsByDir.get(dir)!;
+      const dirContracts = contractsByDir.get(dir) || [];
       generateDirectoryIndex(abisDir, dir, dirContracts, contracts);
     }
 

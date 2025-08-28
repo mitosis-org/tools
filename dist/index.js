@@ -407,10 +407,27 @@ function generateIndexFiles(abisDir, contracts) {
       }
       contractsByDir.get(dir).push(contract);
     }
-    const sortedDirs = Array.from(contractsByDir.keys()).sort();
+    const allDirs = /* @__PURE__ */ new Set();
+    for (const contract of contracts) {
+      const dir = path4.dirname(contract.srcPath);
+      const parts = dir.split(path4.sep);
+      for (let i = 1; i <= parts.length; i++) {
+        const parentDir = parts.slice(0, i).join(path4.sep);
+        if (parentDir !== ".") {
+          allDirs.add(parentDir);
+        }
+      }
+    }
+    const sortedDirs = Array.from(allDirs).sort((a, b) => {
+      const depthA = a.split(path4.sep).length;
+      const depthB = b.split(path4.sep).length;
+      if (depthA !== depthB) {
+        return depthB - depthA;
+      }
+      return a.localeCompare(b);
+    });
     for (const dir of sortedDirs) {
-      if (dir === ".") continue;
-      const dirContracts = contractsByDir.get(dir);
+      const dirContracts = contractsByDir.get(dir) || [];
       generateDirectoryIndex(abisDir, dir, dirContracts, contracts);
     }
     generateRootIndex(abisDir, contractsByDir, sortedDirs);
