@@ -465,59 +465,28 @@ function generateRootIndex(abisDir, contractsByDir, sortedDirs) {
     imports.push(`import ${importName} from './${contract.contractName}.js';`);
     exports2.push(`  ${contract.contractName}: ${importName},`);
   }
-  const nestedExports = {};
+  const topLevelDirs = /* @__PURE__ */ new Set();
   for (const dir of sortedDirs) {
     if (dir === ".") continue;
     const pathParts = dir.split(path4.sep);
-    const camelCaseParts = pathParts.map((part, index) => {
-      const words = part.split("-");
-      return words.map((word, wordIndex) => {
-        if (index === 0 && wordIndex === 0) {
-          return word;
-        }
-        return word.charAt(0).toUpperCase() + word.slice(1);
-      }).join("");
-    });
-    const importAlias = camelCaseParts.join("") + "Exports";
-    const importPath = `./${dir}/index.js`;
+    topLevelDirs.add(pathParts[0]);
+  }
+  const sortedTopLevelDirs = Array.from(topLevelDirs).sort();
+  for (const topDir of sortedTopLevelDirs) {
+    const words = topDir.split("-");
+    const camelCase = words.map((word, index) => {
+      if (index === 0) {
+        return word;
+      }
+      return word.charAt(0).toUpperCase() + word.slice(1);
+    }).join("");
+    const importAlias = camelCase + "Exports";
+    const importPath = `./${topDir}/index.js`;
     imports.push(
       `import * as ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
     );
-    let current = nestedExports;
-    for (let i = 0; i < pathParts.length - 1; i++) {
-      const part = pathParts[i];
-      if (!current[part]) {
-        current[part] = {};
-      }
-      current = current[part];
-    }
-    current[pathParts[pathParts.length - 1]] = importAlias;
-  }
-  function stringifyExports(obj, indent = 2) {
-    const spaces = " ".repeat(indent);
-    const entries = Object.entries(obj).sort(([a], [b]) => a.localeCompare(b));
-    if (entries.length === 0) return "{}";
-    const lines = entries.map(([key, value]) => {
-      const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
-      if (typeof value === "string") {
-        return `${spaces}${quotedKey}: ${value},`;
-      } else {
-        const nestedContent = stringifyExports(value, indent + 2);
-        return `${spaces}${quotedKey}: ${nestedContent},`;
-      }
-    });
-    return `{
-${lines.join("\n")}
-${" ".repeat(indent - 2)}}`;
-  }
-  for (const [key, value] of Object.entries(nestedExports)) {
-    const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
-    if (typeof value === "string") {
-      exports2.push(`  ${quotedKey}: ${value},`);
-    } else {
-      const nestedContent = stringifyExports(value, 4);
-      exports2.push(`  ${quotedKey}: ${nestedContent},`);
-    }
+    const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(topDir) ? topDir : `'${topDir}'`;
+    exports2.push(`  ${quotedKey}: ${importAlias},`);
   }
   const content = `${imports.join("\n")}
 
