@@ -207,7 +207,7 @@ function generateDirectoryIndex(
     const importPath = `./${subdir}/index.js`;
 
     imports.push(
-      `import * as ${importAlias} from '${importPath.replace(/\\/g, '/')}';`,
+      `import ${importAlias} from '${importPath.replace(/\\/g, '/')}';`,
     );
 
     // Add to exports
@@ -219,9 +219,11 @@ function generateDirectoryIndex(
 
   const content = `${imports.join('\n')}
 
-export {
+const abis = {
 ${exports.join('\n')}
 };
+
+export default abis;
 `;
 
   const indexPath = path.join(abisDir, dir, 'index.ts');
@@ -285,7 +287,7 @@ function generateRootIndex(
     const importPath = `./${topDir}/index.js`;
 
     imports.push(
-      `import * as ${importAlias} from '${importPath.replace(/\\/g, '/')}';`,
+      `import ${importAlias} from '${importPath.replace(/\\/g, '/')}';`,
     );
 
     // Add to exports
@@ -297,9 +299,11 @@ function generateRootIndex(
 
   const content = `${imports.join('\n')}
 
-export default {
+const abis = {
 ${exports.join('\n')}
 };
+
+export default abis;
 `;
 
   const indexPath = path.join(abisDir, 'index.ts');

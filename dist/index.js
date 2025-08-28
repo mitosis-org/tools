@@ -462,16 +462,18 @@ function generateDirectoryIndex(abisDir, dir, contracts, allContracts) {
     const importAlias = camelCase + "Exports";
     const importPath = `./${subdir}/index.js`;
     imports.push(
-      `import * as ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
+      `import ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
     );
     const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(subdir) ? subdir : `'${subdir}'`;
     exports2.push(`  ${quotedKey}: ${importAlias},`);
   }
   const content = `${imports.join("\n")}
 
-export {
+const abis = {
 ${exports2.join("\n")}
 };
+
+export default abis;
 `;
   const indexPath = path4.join(abisDir, dir, "index.ts");
   fs4.writeFileSync(indexPath, content, "utf8");
@@ -511,16 +513,18 @@ function generateRootIndex(abisDir, contractsByDir, sortedDirs) {
     const importAlias = camelCase + "Exports";
     const importPath = `./${topDir}/index.js`;
     imports.push(
-      `import * as ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
+      `import ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
     );
     const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(topDir) ? topDir : `'${topDir}'`;
     exports2.push(`  ${quotedKey}: ${importAlias},`);
   }
   const content = `${imports.join("\n")}
 
-export default {
+const abis = {
 ${exports2.join("\n")}
 };
+
+export default abis;
 `;
   const indexPath = path4.join(abisDir, "index.ts");
   fs4.writeFileSync(indexPath, content, "utf8");
