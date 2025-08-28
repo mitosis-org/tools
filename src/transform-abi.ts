@@ -110,8 +110,14 @@ function generateIndexFile(abisDir: string, contracts: ContractInfo[]): void {
   const t = hrtime();
 
   try {
-    // Generate imports
+    // Sort contracts for deterministic output
+    const sortedContracts = [...contracts].sort((a, b) =>
+      a.srcPath.localeCompare(b.srcPath),
+    );
+
+    // Generate imports with unique names
     const imports: string[] = [];
+    const nameCounter = new Map<string, number>();
 
     // Build a nested structure for exports
     interface ExportStructure {
@@ -119,14 +125,22 @@ function generateIndexFile(abisDir: string, contracts: ContractInfo[]): void {
     }
     const exportStructure: ExportStructure = {};
 
-    for (const contract of contracts) {
+    for (const contract of sortedContracts) {
       const dir = path.dirname(contract.srcPath);
       const importPath =
         dir === '.'
           ? `./${contract.contractName}`
           : `./${path.join(dir, contract.contractName)}`;
 
-      const importName = `${contract.contractName}Abi`;
+      // Generate unique import name to avoid conflicts
+      let importName = `${contract.contractName}Abi`;
+      const baseImportName = importName;
+      let counter = nameCounter.get(baseImportName) || 0;
+      if (counter > 0) {
+        importName = `${baseImportName}${counter}`;
+      }
+      nameCounter.set(baseImportName, counter + 1);
+
       imports.push(
         `import ${importName} from '${importPath.replace(/\\/g, '/')}.js';`,
       );
@@ -146,7 +160,8 @@ function generateIndexFile(abisDir: string, contracts: ContractInfo[]): void {
           if (!current[part]) {
             current[part] = {};
           }
-          current = current[part];
+          // Type assertion to navigate nested structure
+          current = current[part] as ExportStructure;
         }
 
         // Add the contract to the deepest level
@@ -160,18 +175,25 @@ function generateIndexFile(abisDir: string, contracts: ContractInfo[]): void {
       indent: number = 2,
     ): string {
       const spaces = ' '.repeat(indent);
-      const entries = Object.entries(obj);
+      const entries = Object.entries(obj).sort(([a], [b]) =>
+        a.localeCompare(b),
+      );
 
       if (entries.length === 0) return '{}';
 
       const lines = entries.map(([key, value]) => {
+        // Quote key if it contains special characters
+        const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key)
+          ? key
+          : `'${key}'`;
+
         if (typeof value === 'string') {
           // Direct import reference
-          return `${spaces}${key}: ${value},`;
+          return `${spaces}${quotedKey}: ${value},`;
         } else {
           // Nested object
           const nestedContent = stringifyExports(value, indent + 2);
-          return `${spaces}${key}: ${nestedContent},`;
+          return `${spaces}${quotedKey}: ${nestedContent},`;
         }
       });
 

@@ -109,6 +109,8 @@ Given this source structure:
 ```
 src/
 ├── Token.sol
+├── my-contracts/
+│   └── Staking.sol
 └── governance/
     └── Governor.sol
 ```
@@ -118,6 +120,8 @@ The tool generates:
 ```
 abis/
 ├── Token.ts
+├── my-contracts/
+│   └── Staking.ts
 ├── governance/
 │   └── Governor.ts
 └── index.ts
@@ -128,14 +132,20 @@ The generated `index.ts` file exports all ABIs:
 ```typescript
 import TokenAbi from './Token.js';
 import GovernorAbi from './governance/Governor.js';
+import StakingAbi from './my-contracts/Staking.js';
 
 export default {
   Token: TokenAbi,
+  'my-contracts': {
+    Staking: StakingAbi,
+  },
   governance: {
     Governor: GovernorAbi,
   },
 };
 ```
+
+Note: Directory names with special characters (like dashes) are automatically quoted in the export object.
 
 ## Requirements
 

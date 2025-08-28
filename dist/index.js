@@ -401,14 +401,17 @@ function generateIndexFile(abisDir, contracts) {
   try {
     let stringifyExports2 = function(obj, indent = 2) {
       const spaces = " ".repeat(indent);
-      const entries = Object.entries(obj);
+      const entries = Object.entries(obj).sort(
+        ([a], [b]) => a.localeCompare(b)
+      );
       if (entries.length === 0) return "{}";
       const lines = entries.map(([key, value]) => {
+        const quotedKey = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(key) ? key : `'${key}'`;
         if (typeof value === "string") {
-          return `${spaces}${key}: ${value},`;
+          return `${spaces}${quotedKey}: ${value},`;
         } else {
           const nestedContent = stringifyExports2(value, indent + 2);
-          return `${spaces}${key}: ${nestedContent},`;
+          return `${spaces}${quotedKey}: ${nestedContent},`;
         }
       });
       return `{
@@ -416,13 +419,25 @@ ${lines.join("\n")}
 ${" ".repeat(indent - 2)}}`;
     };
     var stringifyExports = stringifyExports2;
+    const sortedContracts = [...contracts].sort(
+      (a, b) => a.srcPath.localeCompare(b.srcPath)
+    );
     const imports = [];
+    const nameCounter = /* @__PURE__ */ new Map();
     const exportStructure = {};
-    for (const contract of contracts) {
+    for (const contract of sortedContracts) {
       const dir = path4.dirname(contract.srcPath);
       const importPath = dir === "." ? `./${contract.contractName}` : `./${path4.join(dir, contract.contractName)}`;
-      const importName = `${contract.contractName}Abi`;
-      imports.push(`import ${importName} from '${importPath.replace(/\\/g, "/")}.js';`);
+      let importName = `${contract.contractName}Abi`;
+      const baseImportName = importName;
+      let counter = nameCounter.get(baseImportName) || 0;
+      if (counter > 0) {
+        importName = `${baseImportName}${counter}`;
+      }
+      nameCounter.set(baseImportName, counter + 1);
+      imports.push(
+        `import ${importName} from '${importPath.replace(/\\/g, "/")}.js';`
+      );
       if (dir === ".") {
         exportStructure[contract.contractName] = importName;
       } else {
