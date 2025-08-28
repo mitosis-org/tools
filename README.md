@@ -93,6 +93,7 @@ mito-tools transform-abi -s contracts -o forge-out -a generated-abis
 - Locates corresponding ABI JSON files in Forge output directory
 - Generates TypeScript files with proper const assertions
 - Preserves source directory structure in output
+- Automatically generates an index.ts file that exports all ABIs
 - Provides detailed progress and error reporting
 
 **Options:**
@@ -100,6 +101,41 @@ mito-tools transform-abi -s contracts -o forge-out -a generated-abis
 - `-s, --src-dir <path>`: Source directory containing .sol files (default: "src")
 - `-o, --out-dir <path>`: Forge output directory containing ABI files (default: "out")
 - `-a, --abis-dir <path>`: Output directory for TypeScript ABI files (default: "abis")
+
+**Example Output Structure:**
+
+Given this source structure:
+
+```
+src/
+├── Token.sol
+└── governance/
+    └── Governor.sol
+```
+
+The tool generates:
+
+```
+abis/
+├── Token.ts
+├── governance/
+│   └── Governor.ts
+└── index.ts
+```
+
+The generated `index.ts` file exports all ABIs:
+
+```typescript
+import TokenAbi from './Token.js';
+import GovernorAbi from './governance/Governor.js';
+
+export default {
+  Token: TokenAbi,
+  governance: {
+    Governor: GovernorAbi,
+  },
+};
+```
 
 ## Requirements
 

@@ -396,6 +396,70 @@ export default abi;
     throw error;
   }
 }
+function generateIndexFile(abisDir, contracts) {
+  const t = hrtime();
+  try {
+    let stringifyExports2 = function(obj, indent = 2) {
+      const spaces = " ".repeat(indent);
+      const entries = Object.entries(obj);
+      if (entries.length === 0) return "{}";
+      const lines = entries.map(([key, value]) => {
+        if (typeof value === "string") {
+          return `${spaces}${key}: ${value},`;
+        } else {
+          const nestedContent = stringifyExports2(value, indent + 2);
+          return `${spaces}${key}: ${nestedContent},`;
+        }
+      });
+      return `{
+${lines.join("\n")}
+${" ".repeat(indent - 2)}}`;
+    };
+    var stringifyExports = stringifyExports2;
+    const imports = [];
+    const exportStructure = {};
+    for (const contract of contracts) {
+      const dir = path4.dirname(contract.srcPath);
+      const importPath = dir === "." ? `./${contract.contractName}` : `./${path4.join(dir, contract.contractName)}`;
+      const importName = `${contract.contractName}Abi`;
+      imports.push(`import ${importName} from '${importPath.replace(/\\/g, "/")}.js';`);
+      if (dir === ".") {
+        exportStructure[contract.contractName] = importName;
+      } else {
+        const pathParts = dir.split(path4.sep);
+        let current = exportStructure;
+        for (let i = 0; i < pathParts.length; i++) {
+          const part = pathParts[i];
+          if (!current[part]) {
+            current[part] = {};
+          }
+          current = current[part];
+        }
+        current[contract.contractName] = importName;
+      }
+    }
+    const exportContent = stringifyExports2(exportStructure);
+    const indexContent = `${imports.join("\n")}
+
+export default ${exportContent};
+`;
+    const indexPath = path4.join(abisDir, "index.ts");
+    fs4.writeFileSync(indexPath, indexContent, "utf8");
+    console.log(
+      import_chalk3.default.green("\u2705"),
+      import_chalk3.default.gray("index.ts \u2192"),
+      path4.relative(process.cwd(), indexPath),
+      `${timeDiff(t)}ms`
+    );
+  } catch (error) {
+    console.error(
+      import_chalk3.default.red("\u274C"),
+      "Error generating index.ts:",
+      error instanceof Error ? error.message : error
+    );
+    throw error;
+  }
+}
 async function executeTransformAbi(options) {
   const t = hrtime();
   const srcDir = path4.resolve(options.srcDir || "src");
@@ -407,15 +471,24 @@ async function executeTransformAbi(options) {
   if (!fs4.existsSync(srcDir)) {
     throw new Error(`Source directory '${srcDir}' does not exist`);
   }
-  console.log(import_chalk3.default.blue("\u{1F50D}"), `Searching for contracts in: ${import_chalk3.default.gray(srcDir)}`);
+  console.log(
+    import_chalk3.default.blue("\u{1F50D}"),
+    `Searching for contracts in: ${import_chalk3.default.gray(srcDir)}`
+  );
   console.log(import_chalk3.default.blue("\u{1F4C2}"), `Looking for ABIs in: ${import_chalk3.default.gray(outDir)}`);
   console.log(import_chalk3.default.blue("\u{1F4C1}"), `Output directory: ${import_chalk3.default.gray(abisDir)}`);
   const contracts = findSrcContractAbiFiles(outDir, srcDir);
   if (contracts.length === 0) {
-    console.log(import_chalk3.default.yellow("\u2139\uFE0F"), "No contracts with ABIs found in src/ directory");
+    console.log(
+      import_chalk3.default.yellow("\u2139\uFE0F"),
+      "No contracts with ABIs found in src/ directory"
+    );
     return;
   }
-  console.log(import_chalk3.default.blue("\u{1F4C1}"), `Found ${import_chalk3.default.cyan(contracts.length)} source contracts with ABIs`);
+  console.log(
+    import_chalk3.default.blue("\u{1F4C1}"),
+    `Found ${import_chalk3.default.cyan(contracts.length)} source contracts with ABIs`
+  );
   console.log(import_chalk3.default.blue("\u{1F504}"), "Starting transformation...\n");
   let successCount = 0;
   let errorCount = 0;
@@ -423,7 +496,7 @@ async function executeTransformAbi(options) {
     try {
       transformContractAbi(contract, abisDir);
       successCount++;
-    } catch (error) {
+    } catch {
       errorCount++;
     }
   }
@@ -432,7 +505,27 @@ async function executeTransformAbi(options) {
     `Transformation complete! Generated ${import_chalk3.default.cyan(successCount)} TypeScript ABI files`
   );
   if (errorCount > 0) {
-    console.log(import_chalk3.default.red(`\u26A0\uFE0F`), `Failed to transform ${import_chalk3.default.red(errorCount)} files`);
+    console.log(
+      import_chalk3.default.red(`\u26A0\uFE0F`),
+      `Failed to transform ${import_chalk3.default.red(errorCount)} files`
+    );
+  }
+  if (successCount > 0) {
+    console.log(import_chalk3.default.blue("\n\u{1F4DD}"), "Generating index.ts file...");
+    try {
+      generateIndexFile(
+        abisDir,
+        contracts.filter(() => {
+          return true;
+        })
+      );
+    } catch (error) {
+      console.error(
+        import_chalk3.default.red("\u274C"),
+        "Failed to generate index.ts:",
+        error instanceof Error ? error.message : error
+      );
+    }
   }
   console.log(import_chalk3.default.gray(`Total time: ${timeDiff(t)}ms`));
 }
@@ -483,7 +576,19 @@ program.command("sort-imports").description("Sort import statements in Solidity 
     process.exit(1);
   }
 });
-program.command("transform-abi").description("Transform Solidity contract ABI JSON files to TypeScript files").option("-s, --src-dir <path>", "Source directory containing .sol files", "src").option("-o, --out-dir <path>", "Forge output directory containing ABI files", "out").option("-a, --abis-dir <path>", "Output directory for TypeScript ABI files", "abis").action(async (options) => {
+program.command("transform-abi").description("Transform Solidity contract ABI JSON files to TypeScript files").option(
+  "-s, --src-dir <path>",
+  "Source directory containing .sol files",
+  "src"
+).option(
+  "-o, --out-dir <path>",
+  "Forge output directory containing ABI files",
+  "out"
+).option(
+  "-a, --abis-dir <path>",
+  "Output directory for TypeScript ABI files",
+  "abis"
+).action(async (options) => {
   const { executeTransformAbi: executeTransformAbi2 } = await Promise.resolve().then(() => (init_transform_abi(), transform_abi_exports));
   try {
     await executeTransformAbi2(options);
