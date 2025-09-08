@@ -33,11 +33,21 @@ function findSrcContractAbiFiles(
         const contractName = path.basename(entry.name, '.sol');
 
         // Look for corresponding ABI file in out directory
-        const abiPath = path.join(
+        // First try nested path (matching source structure)
+        let abiPath = path.join(
           outDir,
           currentRelativePath,
           `${contractName}.abi.json`,
         );
+
+        // If not found, try flattened path (Foundry default)
+        if (!fs.existsSync(abiPath)) {
+          abiPath = path.join(
+            outDir,
+            entry.name,
+            `${contractName}.abi.json`,
+          );
+        }
 
         if (fs.existsSync(abiPath)) {
           contractFiles.push({

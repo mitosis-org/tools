@@ -349,11 +349,18 @@ function findSrcContractAbiFiles(outDir, srcDir) {
         traverseSrc(fullSrcPath, currentRelativePath);
       } else if (entry.isFile() && entry.name.endsWith(".sol")) {
         const contractName = path4.basename(entry.name, ".sol");
-        const abiPath = path4.join(
+        let abiPath = path4.join(
           outDir,
           currentRelativePath,
           `${contractName}.abi.json`
         );
+        if (!fs4.existsSync(abiPath)) {
+          abiPath = path4.join(
+            outDir,
+            entry.name,
+            `${contractName}.abi.json`
+          );
+        }
         if (fs4.existsSync(abiPath)) {
           contractFiles.push({
             abiPath,
