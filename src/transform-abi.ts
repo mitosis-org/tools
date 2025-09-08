@@ -35,7 +35,7 @@ function findSrcContractAbiFiles(
         // Look for corresponding ABI file in out directory
         const abiPath = path.join(
           outDir,
-          entry.name,
+          currentRelativePath,
           `${contractName}.abi.json`,
         );
 
