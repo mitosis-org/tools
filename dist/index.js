@@ -379,6 +379,14 @@ function transformContractAbi(contract, baseOutputDir) {
   try {
     const abiContent = fs4.readFileSync(contract.abiPath, "utf8");
     const abiJson = JSON.parse(abiContent);
+    if (Array.isArray(abiJson) && abiJson.length === 0) {
+      console.log(
+        import_chalk3.default.yellow("\u23ED\uFE0F"),
+        import_chalk3.default.gray(`${contract.contractName} \u2192`),
+        "Skipped (empty ABI)"
+      );
+      return false;
+    }
     const tsContent = `const abi = ${JSON.stringify(abiJson, null, 2)} as const;
 
 export default abi;
@@ -394,6 +402,7 @@ export default abi;
       path4.relative(process.cwd(), outputPath),
       `${timeDiff(t)}ms`
     );
+    return true;
   } catch (error) {
     console.error(
       import_chalk3.default.red("\u274C"),
@@ -589,11 +598,18 @@ async function executeTransformAbi(options) {
   );
   console.log(import_chalk3.default.blue("\u{1F504}"), "Starting transformation...\n");
   let successCount = 0;
+  let skippedCount = 0;
   let errorCount = 0;
+  const successfulContracts = [];
   for (const contract of contracts) {
     try {
-      transformContractAbi(contract, abisDir);
-      successCount++;
+      const success = transformContractAbi(contract, abisDir);
+      if (success) {
+        successCount++;
+        successfulContracts.push(contract);
+      } else {
+        skippedCount++;
+      }
     } catch {
       errorCount++;
     }
@@ -602,6 +618,12 @@ async function executeTransformAbi(options) {
     import_chalk3.default.green("\n\u2728"),
     `Transformation complete! Generated ${import_chalk3.default.cyan(successCount)} TypeScript ABI files`
   );
+  if (skippedCount > 0) {
+    console.log(
+      import_chalk3.default.yellow(`\u2139\uFE0F`),
+      `Skipped ${import_chalk3.default.yellow(skippedCount)} empty ABI files`
+    );
+  }
   if (errorCount > 0) {
     console.log(
       import_chalk3.default.red(`\u26A0\uFE0F`),
@@ -611,12 +633,7 @@ async function executeTransformAbi(options) {
   if (successCount > 0) {
     console.log(import_chalk3.default.blue("\n\u{1F4DD}"), "Generating index.ts files...");
     try {
-      generateIndexFiles(
-        abisDir,
-        contracts.filter(() => {
-          return true;
-        })
-      );
+      generateIndexFiles(abisDir, successfulContracts);
     } catch (error) {
       console.error(
         import_chalk3.default.red("\u274C"),

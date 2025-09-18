@@ -66,11 +66,12 @@ function findSrcContractAbiFiles(
 
 /**
  * Transforms an ABI JSON file to a TypeScript file with custom output path
+ * Returns true if the transformation was successful, false if skipped
  */
 function transformContractAbi(
   contract: ContractInfo,
   baseOutputDir: string,
-): void {
+): boolean {
   const t = hrtime();
 
   try {
@@ -79,6 +80,16 @@ function transformContractAbi(
 
     // Parse JSON to validate it
     const abiJson = JSON.parse(abiContent);
+
+    // Skip empty ABIs
+    if (Array.isArray(abiJson) && abiJson.length === 0) {
+      console.log(
+        chalk.yellow('⏭️'),
+        chalk.gray(`${contract.contractName} →`),
+        'Skipped (empty ABI)',
+      );
+      return false;
+    }
 
     // Create the TypeScript content
     const tsContent = `const abi = ${JSON.stringify(abiJson, null, 2)} as const;
@@ -103,6 +114,7 @@ export default abi;
       path.relative(process.cwd(), outputPath),
       `${timeDiff(t)}ms`,
     );
+    return true;
   } catch (error) {
     console.error(
       chalk.red('❌'),
@@ -393,12 +405,19 @@ export async function executeTransformAbi(options: {
   console.log(chalk.blue('🔄'), 'Starting transformation...\n');
 
   let successCount = 0;
+  let skippedCount = 0;
   let errorCount = 0;
+  const successfulContracts: ContractInfo[] = [];
 
   for (const contract of contracts) {
     try {
-      transformContractAbi(contract, abisDir);
-      successCount++;
+      const success = transformContractAbi(contract, abisDir);
+      if (success) {
+        successCount++;
+        successfulContracts.push(contract);
+      } else {
+        skippedCount++;
+      }
     } catch {
       errorCount++;
     }
@@ -408,6 +427,13 @@ export async function executeTransformAbi(options: {
     chalk.green('\n✨'),
     `Transformation complete! Generated ${chalk.cyan(successCount)} TypeScript ABI files`,
   );
+
+  if (skippedCount > 0) {
+    console.log(
+      chalk.yellow(`ℹ️`),
+      `Skipped ${chalk.yellow(skippedCount)} empty ABI files`,
+    );
+  }
 
   if (errorCount > 0) {
     console.log(
@@ -420,14 +446,7 @@ export async function executeTransformAbi(options: {
   if (successCount > 0) {
     console.log(chalk.blue('\n📝'), 'Generating index.ts files...');
     try {
-      generateIndexFiles(
-        abisDir,
-        contracts.filter(() => {
-          // Only include contracts that were successfully transformed
-          // This is a simple approach - in production you might want to track which specific contracts succeeded
-          return true;
-        }),
-      );
+      generateIndexFiles(abisDir, successfulContracts);
     } catch (error) {
       console.error(
         chalk.red('❌'),
