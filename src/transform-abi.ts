@@ -128,7 +128,11 @@ export default abi;
 /**
  * Generates index.ts files for each directory that exports all ABI constants
  */
-function generateIndexFiles(abisDir: string, contracts: ContractInfo[]): void {
+function generateIndexFiles(
+  abisDir: string,
+  contracts: ContractInfo[],
+  addJsExtension: boolean,
+): void {
   const t = hrtime();
 
   try {
@@ -172,11 +176,11 @@ function generateIndexFiles(abisDir: string, contracts: ContractInfo[]): void {
     // Generate index.ts for each directory
     for (const dir of sortedDirs) {
       const dirContracts = contractsByDir.get(dir) || [];
-      generateDirectoryIndex(abisDir, dir, dirContracts, contracts);
+      generateDirectoryIndex(abisDir, dir, dirContracts, contracts, addJsExtension);
     }
 
     // Generate root index.ts
-    generateRootIndex(abisDir, contractsByDir, sortedDirs);
+    generateRootIndex(abisDir, contractsByDir, sortedDirs, addJsExtension);
 
     console.log(
       chalk.green('✨'),
@@ -201,9 +205,11 @@ function generateDirectoryIndex(
   dir: string,
   contracts: ContractInfo[],
   allContracts: ContractInfo[],
+  addJsExtension: boolean,
 ): void {
   const imports: string[] = [];
   const exports: string[] = [];
+  const ext = addJsExtension ? '.js' : '';
 
   // Sort contracts for consistent output
   const sortedContracts = [...contracts].sort((a, b) =>
@@ -213,7 +219,7 @@ function generateDirectoryIndex(
   // Import direct contracts
   for (const contract of sortedContracts) {
     const importName = `${contract.contractName}Abi`;
-    imports.push(`import ${importName} from './${contract.contractName}.js';`);
+    imports.push(`import ${importName} from './${contract.contractName}${ext}';`);
     exports.push(`  ${contract.contractName}: ${importName},`);
   }
 
@@ -247,7 +253,7 @@ function generateDirectoryIndex(
       })
       .join('');
     const importAlias = camelCase + 'Exports';
-    const importPath = `./${subdir}/index.js`;
+    const importPath = `./${subdir}/index${ext}`;
 
     imports.push(
       `import ${importAlias} from '${importPath.replace(/\\/g, '/')}';`,
@@ -286,9 +292,11 @@ function generateRootIndex(
   abisDir: string,
   contractsByDir: Map<string, ContractInfo[]>,
   sortedDirs: string[],
+  addJsExtension: boolean,
 ): void {
   const imports: string[] = [];
   const exports: string[] = [];
+  const ext = addJsExtension ? '.js' : '';
 
   // Handle root level contracts
   const rootContracts = contractsByDir.get('.') || [];
@@ -298,7 +306,7 @@ function generateRootIndex(
 
   for (const contract of sortedRootContracts) {
     const importName = `${contract.contractName}Abi`;
-    imports.push(`import ${importName} from './${contract.contractName}.js';`);
+    imports.push(`import ${importName} from './${contract.contractName}${ext}';`);
     exports.push(`  ${contract.contractName}: ${importName},`);
   }
 
@@ -327,7 +335,7 @@ function generateRootIndex(
       })
       .join('');
     const importAlias = camelCase + 'Exports';
-    const importPath = `./${topDir}/index.js`;
+    const importPath = `./${topDir}/index${ext}`;
 
     imports.push(
       `import ${importAlias} from '${importPath.replace(/\\/g, '/')}';`,
@@ -366,6 +374,7 @@ export async function executeTransformAbi(options: {
   srcDir?: string;
   outDir?: string;
   abisDir?: string;
+  addJsExtension?: boolean;
 }): Promise<void> {
   const t = hrtime();
 
@@ -446,7 +455,8 @@ export async function executeTransformAbi(options: {
   if (successCount > 0) {
     console.log(chalk.blue('\n📝'), 'Generating index.ts files...');
     try {
-      generateIndexFiles(abisDir, successfulContracts);
+      const addJsExtension = options.addJsExtension ?? true;
+      generateIndexFiles(abisDir, successfulContracts, addJsExtension);
     } catch (error) {
       console.error(
         chalk.red('❌'),

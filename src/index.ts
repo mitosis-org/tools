@@ -73,10 +73,20 @@ program
     'Output directory for TypeScript ABI files',
     'abis',
   )
+  .option(
+    '--no-js-extension',
+    'Do not add .js extension to import statements',
+    false,
+  )
   .action(async (options) => {
     const { executeTransformAbi } = await import('./transform-abi.js');
     try {
-      await executeTransformAbi(options);
+      await executeTransformAbi({
+        srcDir: options.srcDir,
+        outDir: options.outDir,
+        abisDir: options.abisDir,
+        addJsExtension: options.jsExtension,
+      });
     } catch (err) {
       console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
       process.exit(1);

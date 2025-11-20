@@ -412,7 +412,7 @@ export default abi;
     throw error;
   }
 }
-function generateIndexFiles(abisDir, contracts) {
+function generateIndexFiles(abisDir, contracts, addJsExtension) {
   const t = hrtime();
   try {
     const contractsByDir = /* @__PURE__ */ new Map();
@@ -444,9 +444,9 @@ function generateIndexFiles(abisDir, contracts) {
     });
     for (const dir of sortedDirs) {
       const dirContracts = contractsByDir.get(dir) || [];
-      generateDirectoryIndex(abisDir, dir, dirContracts, contracts);
+      generateDirectoryIndex(abisDir, dir, dirContracts, contracts, addJsExtension);
     }
-    generateRootIndex(abisDir, contractsByDir, sortedDirs);
+    generateRootIndex(abisDir, contractsByDir, sortedDirs, addJsExtension);
     console.log(
       import_chalk3.default.green("\u2728"),
       `Generated ${sortedDirs.length} index.ts files`,
@@ -461,15 +461,16 @@ function generateIndexFiles(abisDir, contracts) {
     throw error;
   }
 }
-function generateDirectoryIndex(abisDir, dir, contracts, allContracts) {
+function generateDirectoryIndex(abisDir, dir, contracts, allContracts, addJsExtension) {
   const imports = [];
   const exports2 = [];
+  const ext = addJsExtension ? ".js" : "";
   const sortedContracts = [...contracts].sort(
     (a, b) => a.contractName.localeCompare(b.contractName)
   );
   for (const contract of sortedContracts) {
     const importName = `${contract.contractName}Abi`;
-    imports.push(`import ${importName} from './${contract.contractName}.js';`);
+    imports.push(`import ${importName} from './${contract.contractName}${ext}';`);
     exports2.push(`  ${contract.contractName}: ${importName},`);
   }
   const subdirs = /* @__PURE__ */ new Set();
@@ -493,7 +494,7 @@ function generateDirectoryIndex(abisDir, dir, contracts, allContracts) {
       return word.charAt(0).toUpperCase() + word.slice(1);
     }).join("");
     const importAlias = camelCase + "Exports";
-    const importPath = `./${subdir}/index.js`;
+    const importPath = `./${subdir}/index${ext}`;
     imports.push(
       `import ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
     );
@@ -516,16 +517,17 @@ export default abis;
     path4.relative(process.cwd(), indexPath)
   );
 }
-function generateRootIndex(abisDir, contractsByDir, sortedDirs) {
+function generateRootIndex(abisDir, contractsByDir, sortedDirs, addJsExtension) {
   const imports = [];
   const exports2 = [];
+  const ext = addJsExtension ? ".js" : "";
   const rootContracts = contractsByDir.get(".") || [];
   const sortedRootContracts = [...rootContracts].sort(
     (a, b) => a.contractName.localeCompare(b.contractName)
   );
   for (const contract of sortedRootContracts) {
     const importName = `${contract.contractName}Abi`;
-    imports.push(`import ${importName} from './${contract.contractName}.js';`);
+    imports.push(`import ${importName} from './${contract.contractName}${ext}';`);
     exports2.push(`  ${contract.contractName}: ${importName},`);
   }
   const topLevelDirs = /* @__PURE__ */ new Set();
@@ -544,7 +546,7 @@ function generateRootIndex(abisDir, contractsByDir, sortedDirs) {
       return word.charAt(0).toUpperCase() + word.slice(1);
     }).join("");
     const importAlias = camelCase + "Exports";
-    const importPath = `./${topDir}/index.js`;
+    const importPath = `./${topDir}/index${ext}`;
     imports.push(
       `import ${importAlias} from '${importPath.replace(/\\/g, "/")}';`
     );
@@ -633,7 +635,8 @@ async function executeTransformAbi(options) {
   if (successCount > 0) {
     console.log(import_chalk3.default.blue("\n\u{1F4DD}"), "Generating index.ts files...");
     try {
-      generateIndexFiles(abisDir, successfulContracts);
+      const addJsExtension = options.addJsExtension ?? true;
+      generateIndexFiles(abisDir, successfulContracts, addJsExtension);
     } catch (error) {
       console.error(
         import_chalk3.default.red("\u274C"),
@@ -703,10 +706,19 @@ program.command("transform-abi").description("Transform Solidity contract ABI JS
   "-a, --abis-dir <path>",
   "Output directory for TypeScript ABI files",
   "abis"
+).option(
+  "--no-js-extension",
+  "Do not add .js extension to import statements",
+  false
 ).action(async (options) => {
   const { executeTransformAbi: executeTransformAbi2 } = await Promise.resolve().then(() => (init_transform_abi(), transform_abi_exports));
   try {
-    await executeTransformAbi2(options);
+    await executeTransformAbi2({
+      srcDir: options.srcDir,
+      outDir: options.outDir,
+      abisDir: options.abisDir,
+      addJsExtension: options.jsExtension
+    });
   } catch (err) {
     console.error(`[ERROR] ${err instanceof Error ? err.message : err}`);
     process.exit(1);
